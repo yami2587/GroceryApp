@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Wishlist</h3>
+<div class="row">
+  {% for item in request.user.wishlist_items.all %}
+  <div class="col-md-4">
+    <div class="card">
+      <img src="{{ item.product.image_url|default:'https://via.placeholder.com/400' }}" class="card-img-top">
+      <div class="card-body">
+        <h6>{{ item.product.name }}</h6>
+        <p>₹{{ item.product.price }}</p>
+        <form method="post" action="{% url 'wishlist-remove' %}">
+          {% csrf_token %}
+          <input type="hidden" name="product_id" value="{{ item.product.id }}">
+          <button class="btn btn-sm btn-outline-danger">Remove</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <p>No wishlist items.</p>
+  {% endfor %}
+</div>
+{% endblock %}

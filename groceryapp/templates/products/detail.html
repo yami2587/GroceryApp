@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mt-3">
+  <div class="col-md-5">
+    <img src="{{ product.image.url|default:'/static/img/placeholder.png' }}" class="img-fluid rounded">
+  </div>
+  <div class="col-md-7">
+    <h2>{{ product.name }}</h2>
+    <p class="text-muted">₹{{ product.price }}</p>
+    <p>{{ product.description }}</p>
+    <form method="post" action="{% url 'cart-add-ui' %}">
+      {% csrf_token %}
+      <input type="hidden" name="product_id" value="{{ product.id }}">
+      <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}" class="form-control w-25 mb-2">
+      <button class="btn btn-success">Add to Cart</button>
+    </form>
+  </div>
+</div>
+
+<hr>
+<h4>Related Products</h4>
+<div class="row">
+  {% for p in related_products %}
+  <div class="col-md-3 mb-3">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6>{{ p.name }}</h6>
+        <p>₹{{ p.price }}</p>
+        <a href="{% url 'product-detail' p.id %}" class="btn btn-outline-secondary btn-sm">View</a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <p>No related items found.</p>
+  {% endfor %}
+</div>
+{% endblock %}

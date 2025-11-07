@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Order #{{ order.id }}</h3>
+<p>Date: {{ order.created_at }}</p>
+<p>Status: {{ order.status }}</p>
+<p>Total: ₹{{ order.total_price }}</p>
+<hr>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>Qty</th>
+      <th>Price</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in order.orderitem_set.all %}
+    <tr>
+      <td>{{ item.product.name }}</td>
+      <td>{{ item.quantity }}</td>
+      <td>₹{{ item.price_when_bought }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<a href="{% url 'my-orders' %}" class="btn btn-outline-secondary">Back</a>
+{% endblock %}

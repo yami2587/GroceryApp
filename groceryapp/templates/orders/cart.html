@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load cart_extras %}
+{% load static %}
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <h3>Your Cart</h3>
+    {% if cart_items %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Qty</th>
+            <th>Subtotal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in cart_items %}
+          <tr>
+            <td>{{ item.product.name }}</td>
+            <td>₹{{ item.product.price }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>₹{{ item.product.price|floatformat:2|add:"0" |floatformat:2|floatformat:2 }} × {{ item.quantity }} = ₹{{ item.product.price|mul:item.quantity }}</td>
+            <td>
+              <form method="post" action="{% url 'cart-remove-ui' %}">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ item.product.id }}">
+                <button class="btn btn-sm btn-outline-danger">Remove</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>Your cart is empty.</p>
+    {% endif %}
+  </div>
+
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h5>Summary</h5>
+      <p>Items: {{ cart_items|length }}</p>
+      <p>Subtotal: ₹{{ subtotal }}</p>
+      <form action="{% url 'checkout-page' %}" method="get">
+        <button class="btn btn-primary w-100">Proceed to Checkout</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="text-center">
+  <h2>Order placed!</h2>
+  <p>Order #{{ order.id }} — Total: ₹{{ order.total_price }}</p>
+  <p>Placed on: {{ order.created_at }}</p>
+  <a href="/" class="btn btn-primary">Continue shopping</a>
+  <a href="/admin/" class="btn btn-outline-secondary">Admin</a>
+</div>
+{% endblock %}
