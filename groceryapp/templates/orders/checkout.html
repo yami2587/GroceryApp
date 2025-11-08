@@ -35,4 +35,22 @@
     </div>
   </div>
 </div>
+<script>
+  
+    document.getElementById('promo-check-btn').addEventListener('click', async function(e){
+      e.preventDefault();
+    const code = document.getElementById('promo-code-input').value.trim();
+    if(!code) return alert('Enter code');
+    const resp = await fetch(`/orders/promo/validate/?code=${encodeURIComponent(code)}`);
+  const data = await resp.json();
+  if(data.valid) {
+    alert('Valid! Discount: ' + data.discount_percent + '%');
+   
+  } else {
+    alert('Invalid or expired promo code');
+  }
+});
+</script>
+
+
 {% endblock %}

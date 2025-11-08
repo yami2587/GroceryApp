@@ -1,19 +1,10 @@
 # django djangorestframework djangorestframework-simplejwt django-filter
 # Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.sqlite3
-
-# Virtual env
-venv/
-env/
-
-# VS Code
-.vscode/
-*.code-workspace
-
-# OS files
-.DS_Store
-Thumbs.db
+Django>=4.2
+djangorestframework
+psycopg2-binary
+djangorestframework-simplejwt
+gunicorn
+python-dotenv
+whitenoise
+django-filter

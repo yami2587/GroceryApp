@@ -12,7 +12,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from django.contrib import messages
 from django.urls import reverse 
-
+from django.views.decorators.http import require_GET
+from django.http import JsonResponse
 
 
 class CartListView(generics.ListAPIView):
@@ -58,14 +59,12 @@ class CheckoutView(APIView):
    
         promo_code_str = request.POST.get('promo_code') or request.data.get('promo_code')
 
-        # your normal checkout flow logic here...
         cart_items = CartItem.objects.filter(user=request.user)
         if not cart_items.exists():
             return Response({'error': 'Cart is empty'}, status=400)
 
         total_price = sum(item.product.price * item.quantity for item in cart_items)
 
-        # Apply promo code discount
         discount = 0
         if promo_code_str:
             promo = PromoCode.objects.filter(code=promo_code_str, active=True).first()
@@ -135,7 +134,6 @@ class CartPageView(LoginRequiredMixin, View):
         }
         return render(request, 'orders/cart.html', context)
 
-#     Add to cart via form (POST)  
 class AddToCartViewUI(LoginRequiredMixin, View):
     def post(self, request):
         product_id = request.POST.get('product_id')
@@ -154,7 +152,6 @@ class AddToCartViewUI(LoginRequiredMixin, View):
         messages.success(request, f"Added {product.name} (x{qty}) to cart.")
         return redirect(request.META.get('HTTP_REFERER', '/'))
 
-#     Remove item from cart (POST)  
 class RemoveFromCartViewUI(LoginRequiredMixin, View):
     def post(self, request):
         product_id = request.POST.get('product_id')
@@ -166,7 +163,7 @@ class RemoveFromCartViewUI(LoginRequiredMixin, View):
             messages.error(request, "Item not found in cart.")
         return redirect(reverse('cart-page'))
 
-#     Checkout page (GET shows summary, POST performs checkout transaction)  
+
 class CheckoutPageView(LoginRequiredMixin, View):
     def get(self, request):
         cart_items = CartItem.objects.filter(user=request.user).select_related('product')
@@ -226,3 +223,14 @@ class OrderDetailView(LoginRequiredMixin, View):
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk, user=request.user)
         return render(request, 'orders/order_detail.html', {'order': order})
+
+@require_GET
+def validate_promo(request):
+    code = request.GET.get('code','').strip()
+    try:
+        promo = PromoCode.objects.get(code__iexact=code)
+        valid = promo.is_valid()
+        return JsonResponse({'valid': valid, 'discount_percent': promo.discount_percent if valid else 0})
+    except PromoCode.DoesNotExist:
+        return JsonResponse({'valid': False, 'discount_percent': 0})
+

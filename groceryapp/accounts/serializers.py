@@ -4,10 +4,12 @@ from django.contrib.auth.password_validation import validate_password
 
 User = get_user_model()
 
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id','username','email','first_name','last_name','is_manager','is_customer')
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'role')
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
@@ -15,21 +17,22 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username','email','password','password2','first_name','last_name','is_manager')
+        fields = ('username', 'email', 'password', 'password2', 'first_name', 'last_name', 'role')
 
-    def validate(self, data):
-        if data['password'] != data['password2']:
-            raise serializers.ValidationError("Passwords must match.")
-        validate_password(data['password'], user=User(**data))
-        return data
+    def validate(self, attrs):
+        if attrs.get('password') != attrs.get('password2'):
+            raise serializers.ValidationError({"password": "Passwords do not match."})
+
+        temp_user_data = {k: v for k, v in attrs.items() if k not in ('password', 'password2')}
+        temp_user = User(**temp_user_data)
+        validate_password(attrs['password'], user=temp_user)
+        return attrs
 
     def create(self, validated_data):
-        validated_data.pop('password2', None)
+        validated_data.pop('password2')
         password = validated_data.pop('password')
-        is_manager = validated_data.pop('is_manager', False)
+
         user = User(**validated_data)
-        user.is_manager = is_manager
-        user.is_customer = True
         user.set_password(password)
         user.save()
         return user

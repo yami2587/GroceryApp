@@ -2,10 +2,11 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 class User(AbstractUser):
-    is_manager = models.BooleanField(default=False)
-    is_customer = models.BooleanField(default=True)
-    def save(self, *args, **kwargs):
+    ROLE_CHOICES = (
+        ('customer', 'Customer'),
+        ('manager', 'Manager'),
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
 
-        if self.is_manager:
-            self.is_customer = True
-        super().save(*args, **kwargs)
+    def __str__(self):
+        return f"{self.username} ({self.role})"
