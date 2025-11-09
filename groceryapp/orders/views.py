@@ -5,7 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import CartItem, Order, OrderItem, WishlistItem, PromoCode, Payment , ShippingAddress
-from .serializers import CartItemSerializer, OrderSerializer, WishlistSerializer
+# from .serializers import CartItemSerializer, OrderSerializer, WishlistSerializer
+from .serializers import CartItemSerializer, OrderSerializer
 from products.models import Product
 from accounts.models import Address
 from decimal import Decimal
@@ -108,35 +109,35 @@ class CheckoutView(APIView):
         }, status=201)
 
 
-class WishlistListView(generics.ListAPIView):
-    serializer_class = WishlistSerializer
-    permission_classes = [permissions.IsAuthenticated]
+# class WishlistListView(generics.ListAPIView):
+#     serializer_class = WishlistSerializer
+#     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        return WishlistItem.objects.filter(user=self.request.user).select_related('product')
-
-
-class AddWishlistView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        product_id = request.data.get('product_id')
-        product = get_object_or_404(Product, pk=product_id)
-        obj, _ = WishlistItem.objects.get_or_create(user=request.user, product=product)
-        return Response(WishlistSerializer(obj).data)
+#     def get_queryset(self):
+#         return WishlistItem.objects.filter(user=self.request.user).select_related('product')
 
 
-class RemoveWishlistView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+# class AddWishlistView(APIView):
+#     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request):
-        product_id = request.data.get('product_id')
-        try:
-            obj = WishlistItem.objects.get(user=request.user, product_id=product_id)
-            obj.delete()
-            return Response({"detail": "removed"})
-        except WishlistItem.DoesNotExist:
-            return Response({"detail": "not found"}, status=404)
+#     def post(self, request):
+#         product_id = request.data.get('product_id')
+#         product = get_object_or_404(Product, pk=product_id)
+#         obj, _ = WishlistItem.objects.get_or_create(user=request.user, product=product)
+#         return Response(WishlistSerializer(obj).data)
+
+
+# class RemoveWishlistView(APIView):
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def post(self, request):
+#         product_id = request.data.get('product_id')
+#         try:
+#             obj = WishlistItem.objects.get(user=request.user, product_id=product_id)
+#             obj.delete()
+#             return Response({"detail": "removed"})
+#         except WishlistItem.DoesNotExist:
+#             return Response({"detail": "not found"}, status=404)
 
 
 class CartPageView(LoginRequiredMixin, View):
@@ -285,9 +286,18 @@ class PaymentView(LoginRequiredMixin, View):
     def post(self, request):
         order_id = request.POST.get('order_id')
         order = get_object_or_404(Order, pk=order_id, user=request.user)
-        payment = Payment.objects.create(order=order, amount=order.total_price, status='Success')
-        order.is_paid = True
+
+      
+        payment = Payment.objects.create(
+            order=order,
+            amount=order.total_price,
+            paid=True,
+            method='Simulated'
+        )
+
+        order.status = 'PAID'
         order.save()
+
         messages.success(request, "Payment successful!")
         return redirect('order-success', pk=order.id)
 

@@ -1,22 +1,31 @@
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django import forms
+from django.db.models import Q, F, Sum, ProtectedError
+from django.utils.timezone import now
+
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from django.db.models import F, Q
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import user_passes_test, login_required
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django import forms
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .serializers import ProductListSerializer, ProductDetailSerializer
 from .permissions import IsManager
 from products.models import Product
-from orders.models import Order
+from orders.models import Order, OrderItem
 
 
+
+def is_manager(user):
+    return user.is_authenticated and getattr(user, 'role', '') == 'manager'
+
+
+def manager_required(view_func):
+    return user_passes_test(is_manager)(view_func)
 
 
 def home(request):
@@ -116,84 +125,54 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response({"id": product.id, "stock": product.stock})
 
 
-def manager_required(view_func):
-    return user_passes_test(lambda u: u.is_authenticated and getattr(u, 'role', '') == 'manager')(view_func)
-
-
-@manager_required
-def low_stock_alert(request):
-    threshold = int(request.GET.get('threshold', 5))
-    low_products = Product.objects.filter(stock__lte=threshold).order_by('stock')
-    return render(request, 'products/low_stock.html', {'low_products': low_products, 'threshold': threshold})
-
-
-@require_POST
-@manager_required
-def product_increment_stock(request, pk):
-    amount = int(request.POST.get('amount', 1))
-    p = get_object_or_404(Product, pk=pk)
-    p.stock += amount
-    p.save()
-    return redirect('low-stock-alert')
-
-
-@manager_required
-def sales_report(request):
-    order = request.GET.get('order', 'most')
-    category = request.GET.get('category')
-    qs = Product.objects.all()
-    if category:
-        qs = qs.filter(category=category)
-    qs = qs.order_by('sold_count' if order == 'least' else '-sold_count')
-    return render(request, 'products/sales_report.html', {'products': qs})
-
-
-
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'category', 'description', 'price', 'stock', 'image_url']
+        fields = ['name', 'category', 'description', 'price', 'stock', 'image_url', 'image']
 
 
 @manager_required
 def manager_product_list(request):
     qs = Product.objects.all().order_by('-created_at')
-    return render(request, 'products/manager_list.html', {'products': qs})
+    return render(request, 'products/manager_dashboard.html', {'products': qs})
 
 
 @manager_required
 def manager_product_add(request):
-    if request.method == 'POST':
-        form = ProductForm(request.POST)
+    if request.method == "POST":
+        form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            messages.success(request, "Product added")
-            return redirect('manager-product-list')
+            messages.success(request, " Product added successfully!")
+            return redirect("manager-product-list")
     else:
         form = ProductForm()
-    return render(request, 'products/manager_form.html', {'form': form, 'action': 'Add'})
+    return render(request, "products/manager_add_product.html", {"form": form})
 
 
 @manager_required
 def manager_product_edit(request, pk):
-    p = get_object_or_404(Product, pk=pk)
-    if request.method == 'POST':
-        form = ProductForm(request.POST, instance=p)
+    product = get_object_or_404(Product, pk=pk)
+    if request.method == "POST":
+        form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
             form.save()
-            messages.success(request, "Product updated")
-            return redirect('manager-product-list')
+            messages.success(request, " Product updated successfully!")
+            return redirect("manager-product-list")
     else:
-        form = ProductForm(instance=p)
-    return render(request, 'products/manager_form.html', {'form': form, 'action': 'Edit'})
+        form = ProductForm(instance=product)
+    return render(request, "products/manager_edit_product.html", {"form": form, "product": product})
 
 
 @manager_required
 def manager_product_delete(request, pk):
     p = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
-        p.delete()
-        messages.success(request, "Product deleted")
+        try:
+            p.delete()
+            messages.success(request, "Product deleted successfully.")
+        except ProtectedError:
+            messages.error(request, " Cannot delete: product linked to existing orders.")
         return redirect('manager-product-list')
     return render(request, 'products/manager_delete.html', {'product': p})
 
@@ -206,6 +185,24 @@ def manager_product_restock(request, pk):
         if amount > 0:
             p.stock += amount
             p.save()
-            messages.success(request, f"Restocked {p.name} by {amount}")
+            messages.success(request, f"📦 Restocked {p.name} by {amount} units.")
         return redirect('manager-product-list')
     return render(request, 'products/manager_restock.html', {'product': p})
+@manager_required
+def sales_report(request):
+    filter_type = request.GET.get('filter', 'most_sold')
+    report = Product.objects.annotate(total_sold=Sum('orderitem__quantity'))
+
+    if filter_type == 'least_sold':
+        report = report.order_by('total_sold')
+    elif filter_type == 'category':
+        report = report.order_by('category')
+    else:  
+        report = report.order_by('-total_sold')
+
+    return render(request, 'reports/sales_report.html', {'report': report, 'filter': filter_type})
+@user_passes_test(is_manager)
+def low_stock_alert(request):
+    products = Product.objects.filter(stock__lt=5) #min stock - 5
+    return render(request, "products/low_stock.html", {"products": products})
+

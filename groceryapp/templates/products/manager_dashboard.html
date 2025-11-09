@@ -1,43 +1,45 @@
-{% extends 'base.html' %}
-{% block content %}
-<div class="container mt-4">
-  <h2>Manager Dashboard</h2>
-  <a href="{% url 'manager_product_add' %}" class="btn btn-success mb-3">+ Add Product</a>
+{% extends 'manager/manager_base.html' %}
+{% block manager_content %}
+<h3>Manager Dashboard</h3>
 
-  {% if low_stock %}
-  <div class="alert alert-warning">
-    <strong>Low stock alert:</strong>
-    {% for p in low_stock %}
-      <div>{{ p.name }} ({{ p.stock }} left)</div>
-    {% endfor %}
+<div class="row mb-3">
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h5>Total products</h5>
+      <p class="display-6">{{ total_products }}</p>
+    </div>
   </div>
-  {% endif %}
-
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Category</th>
-        <th>Price</th>
-        <th>Stock</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for product in products %}
-      <tr>
-        <td>{{ product.name }}</td>
-        <td>{{ product.category }}</td>
-        <td>₹{{ product.price }}</td>
-        <td>{{ product.stock }}</td>
-        <td>
-          <a href="{% url 'manager_product_edit' product.id %}" class="btn btn-sm btn-info">Edit</a>
-          <a href="{% url 'manager_product_restock' product.id %}" class="btn btn-sm btn-warning">Restock</a>
-          <a href="{% url 'manager_product_delete' product.id %}" class="btn btn-sm btn-danger">Delete</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h5>Low stock items ({{ total_low_stock }})</h5>
+      <ul class="list-unstyled">
+        {% for p in low_stock %}
+          <li>{{ p.name }} — {{ p.stock }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
 </div>
+
+
+
+<h4>All products</h4>
+<table class="table">
+  <thead><tr><th>Name</th><th>Category</th><th>Stock</th><th>Price</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for product in products %}
+    <tr>
+      <td>{{ product.name }}</td>
+      <td>{{ product.get_category_display }}</td>
+      <td>{{ product.stock }}</td>
+      <td>₹{{ product.price }}</td>
+      <td>
+        <a class="btn btn-sm btn-info" href="{% url 'manager_product_edit' product.id %}">Edit</a>
+        <a class="btn btn-sm btn-warning" href="{% url 'manager_product_restock' product.id %}">Restock</a>
+        <a class="btn btn-sm btn-danger" href="{% url 'manager_product_delete' product.id %}">Delete</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

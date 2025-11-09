@@ -5,6 +5,6 @@ register = template.Library()
 @register.filter
 def mul(value, arg):
     try:
-        return float(value) * float(arg)
-    except (ValueError, TypeError):
+        return float(value) * int(arg)
+    except Exception:
         return ''

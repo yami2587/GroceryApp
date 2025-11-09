@@ -11,7 +11,9 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     added_at = models.DateTimeField(auto_now_add=True)
-
+    @property
+    def total_price(self):
+        return self.product.price * self.quantity
     class Meta:
         unique_together = ('user','product')
 
@@ -69,6 +71,14 @@ class Order(models.Model):
     total_price = models.DecimalField(max_digits=12, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
     promo_code = models.ForeignKey(PromoCode, null=True, blank=True, on_delete=models.SET_NULL)
+    STATUS_CHOICES = [
+    ('PENDING','Pending'),
+    ('PAID','Paid'),
+    ('SHIPPED','Shipped'),
+    ('DELIVERED','Delivered'),
+    ('CANCELLED','Cancelled'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
 
 
 class OrderItem(models.Model):

@@ -18,7 +18,6 @@ from .models import Address
 
 User = get_user_model()
 # ---------------
-
 class RegisterView(generics.CreateAPIView):
   
     queryset = User.objects.all()

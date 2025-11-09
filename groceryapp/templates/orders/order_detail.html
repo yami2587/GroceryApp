@@ -2,26 +2,15 @@
 {% block content %}
 <h3>Order #{{ order.id }}</h3>
 <p>Date: {{ order.created_at }}</p>
-<p>Status: {{ order.status }}</p>
+<p>Status: {{ order.get_status_display }}</p>
 <p>Total: ₹{{ order.total_price }}</p>
-<td>
-  {% for item in order.items.all %}
-    <div><small>{{ item.product.name }} (x{{ item.quantity }})</small></div>
-  {% endfor %}
-</td>
-
 <hr>
 <table class="table">
   <thead>
-    <tr>
-      <th>Product</th>
-      <th>Qty</th>
-      <th>Price</th>
-    </tr>
+    <tr><th>Product</th><th>Qty</th><th>Price</th></tr>
   </thead>
   <tbody>
     {% for item in order.items.all %}
-
     <tr>
       <td>{{ item.product.name }}</td>
       <td>{{ item.quantity }}</td>

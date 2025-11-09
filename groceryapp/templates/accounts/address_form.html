@@ -1,18 +1,63 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Add Address</h2>
+<div class="card mx-auto" style="max-width:720px;">
+  <div class="card-body">
+    <h4 class="card-title mb-3">Add / Edit Address</h4>
+    <form method="POST" novalidate>
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Full name</label>
+          <input name="full_name" class="form-control" placeholder="Your full name" required value="{{ request.POST.full_name|default:addr.full_name|default:'' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Phone</label>
+          <input name="phone" class="form-control" placeholder="+91 98765 43210" required value="{{ request.POST.phone|default:addr.phone|default:'' }}">
+        </div>
 
-<form method="POST">
-  {% csrf_token %}
-  <input type="text" name="full_name" placeholder="Full Name" required><br>
-  <input type="text" name="phone" placeholder="Phone" required><br>
-  <input type="text" name="house_no" placeholder="House No." required><br>
-  <input type="text" name="street" placeholder="Street" required><br>
-  <input type="text" name="city" placeholder="City" required><br>
-  <input type="text" name="state" placeholder="State" required><br>
-  <input type="text" name="pincode" placeholder="Pincode" required><br>
-  <input type="text" name="landmark" placeholder="Landmark (optional)"><br>
-  <label><input type="checkbox" name="default"> Set as default</label><br><br>
-  <button type="submit">Save</button>
-</form>
+        <div class="col-12">
+          <label class="form-label">House / Flat / Building</label>
+          <input name="house_no" class="form-control" placeholder="Flat 501, Bldg A" required value="{{ request.POST.house_no|default:addr.house_no|default:'' }}">
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Street / Locality</label>
+          <input name="street" class="form-control" placeholder="Street or colony" value="{{ request.POST.street|default:addr.street|default:'' }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">City</label>
+          <input name="city" class="form-control" required value="{{ request.POST.city|default:addr.city|default:'' }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">State</label>
+          <input name="state" class="form-control" value="{{ request.POST.state|default:addr.state|default:'' }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Pincode</label>
+          <input name="pincode" class="form-control" value="{{ request.POST.pincode|default:addr.pincode|default:'' }}">
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Landmark (optional)</label>
+          <input name="landmark" class="form-control" placeholder="Near XYZ" value="{{ request.POST.landmark|default:addr.landmark|default:'' }}">
+        </div>
+
+        <div class="col-12 d-flex align-items-center gap-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="default" id="defaultCheck" {% if addr.default or request.POST.default %}checked{% endif %}>
+            <label class="form-check-label" for="defaultCheck">Set as default address</label>
+          </div>
+
+          <div class="ms-auto">
+            <a href="{% url 'address_list' %}" class="btn btn-link">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save address</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

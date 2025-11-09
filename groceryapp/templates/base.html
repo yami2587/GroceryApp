@@ -1,147 +1,227 @@
 <!doctype html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Grocery Store</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
+    /* ---------- Base Layout ---------- */
+    body {
+      background-color: #f8f9fa;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .navbar-brand {
+      font-weight: 600;
+    }
+
+    .card {
+      border-radius: 12px;
+      transition: 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .list-group-item-action:hover {
+      background-color: #f1f1f1;
+      color: #0d6efd;
+    }
+
     .product-card img {
       height: 180px;
       object-fit: cover;
     }
 
-    .category-list .nav-link {
-      padding: .25rem .5rem;
+    @media (max-width: 768px) {
+      .category-list, .card-body form {
+        text-align: center;
+      }
+      .navbar-brand {
+        font-size: 1rem;
+      }
     }
-    body {
-  background-color: #f8f9fa;
-}
 
-.navbar-brand {
-  font-weight: 600;
-}
+    /* ---------- Dark Mode ---------- */
+    .dark-mode {
+      background-color: #121212 !important;
+      color: #e1e1e1 !important;
+    }
 
-.card {
-  border-radius: 12px;
-  transition: 0.2s ease;
-}
+    .dark-mode .navbar {
+      background-color: #1e1e1e !important;
+      color: #fff !important;
+    }
 
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
+    .dark-mode .card {
+      background-color: #1e1e1e !important;
+      color: #e1e1e1 !important;
+      border-color: #333 !important;
+    }
 
-.list-group-item-action:hover {
-  background-color: #f1f1f1;
-  color: #0d6efd;
-}
+    .dark-mode .list-group-item {
+      background-color: #1e1e1e !important;
+      color: #e1e1e1 !important;
+    }
 
-@media (max-width: 768px) {
-  .category-list, .card-body form {
-    text-align: center;
-  }
-  .navbar-brand {
-    font-size: 1rem;
-  }
-}
+    .dark-mode .list-group-item:hover {
+      background-color: #2a2a2a !important;
+    }
 
+    .dark-mode .btn-outline-secondary,
+    .dark-mode .btn-outline-primary {
+      color: #e1e1e1 !important;
+      border-color: #888 !important;
+    }
+
+    .dark-mode .btn-outline-secondary:hover,
+    .dark-mode .btn-outline-primary:hover {
+      background-color: #0d6efd !important;
+      color: #fff !important;
+    }
+
+    /* ---------- Sticky Footer ---------- */
+    footer {
+      margin-top: auto;
+      background-color: #fff;
+      border-top: 1px solid #eaeaea;
+      text-align: center;
+      padding: 10px;
+      color: #777;
+      font-size: 0.9rem;
+    }
+
+    .dark-mode footer {
+      background-color: #1e1e1e;
+      color: #bbb;
+      border-top-color: #333;
+    }
+
+    /* ---------- Dark Mode Toggle Button ---------- */
+    #themeToggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 999;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+    }
   </style>
 </head>
 
-<body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+<body class="d-flex flex-column min-vh-100">
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
     <div class="container">
-      <a class="navbar-brand" href="/">🥬 GroceryStore</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <a class="navbar-brand"
+         href="{% if user.is_authenticated and user.is_manager %}{% url 'manager_dashboard' %}{% else %}/{% endif %}">
+         🥬 GroceryStore
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"
+        aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-
+<!-- search fun -->
       <div class="collapse navbar-collapse" id="nav">
-        <form class="d-flex ms-3" id="searchForm" method="get" action="/">
-          <input name="q" class="form-control form-control-sm me-2" type="search" placeholder="Search products..."
-            value="{{ request.GET.q|default:'' }}">
-          <select name="category" class="form-select form-select-sm me-2" style="width:160px;">
+        {% if not is_manager %}
+        <form class="d-flex position-relative ms-3 flex-grow-1" id="searchForm" method="get" action="/">
+          <input name="q" class="form-control form-control-sm me-2" type="search"
+            placeholder="Search products..." value="{{ request.GET.q|default:'' }}">
+          
+          <select name="category" class="form-select form-select-sm me-2" style="max-width:160px;">
             <option value="">All categories</option>
-            {% for key,label in products.CATEGORY_CHOICES %}
-            <option value="{{ key }}" {% if request.GET.category == key %}selected{% endif %}>{{ label }}</option>
+            {% for key,label in CATEGORY_CHOICES %}
+              <option value="{{ key }}" {% if request.GET.category == key %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
           <button class="btn btn-outline-primary btn-sm" type="submit">Search</button>
+        <div id="searchSuggestions" class="position-absolute bg-white border rounded shadow-sm mt-2" style="z-index:9999; width:250px; display:none;">
+</div>
+
         </form>
+        {% endif %}
 
-        <ul class="navbar-nav ms-auto">
+        <ul class="navbar-nav ms-auto align-items-center">
           {% if request.user.is_authenticated %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'my-orders' %}">Orders</a></li>
-          <li class="nav-item"><a class="nav-link position-relative" href="{% url 'cart-page' %}">Cart
-              {% if cart_count %}
-              <span class="badge bg-danger rounded-pill ms-1">{{ cart_count }}</span>
-              {% endif %}
-            </a></li>
-          {% if is_manager %}
-<li class="nav-item dropdown">
-  <a class="nav-link dropdown-toggle" href="#" id="managerDropdown" role="button"
-     data-bs-toggle="dropdown" aria-expanded="false">
-    Manager
-  </a>
-  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="managerDropdown">
-    <li><a class="dropdown-item" href="{% url 'admin:index' %}">Admin Dashboard</a></li>
-    <li><a class="dropdown-item" href="{% url 'low-stock-alert' %}">Low Stock Alerts</a></li>
-    <li><a class="dropdown-item" href="{% url 'sales-report' %}">Sales Report</a></li>
-  </ul>
-</li>
+            {% if not is_manager %}
+              <li class="nav-item"><a class="nav-link" href="{% url 'my-orders' %}">Orders</a></li>
+              <li class="nav-item">
+                <a class="nav-link position-relative" href="{% url 'cart-page' %}">
+                  Cart {% if cart_count %}
+                  <span class="badge bg-danger rounded-pill ms-1">{{ cart_count }}</span>
+                  {% endif %}
+                </a>
+              </li>
+            {% endif %}
 
-          {% endif %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
+            {% if is_manager %}
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="managerDropdown" role="button" data-bs-toggle="dropdown">
+                  Manager
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="managerDropdown">
+                  <li><a class="dropdown-item" href="{% url 'manager_dashboard' %}">Dashboard</a></li>
+                  <li><a class="dropdown-item" href="{% url 'low-stock-alert' %}">Low Stock Alerts</a></li>
+                  <li><a class="dropdown-item" href="{% url 'sales-report' %}">Sales Report</a></li>
+                </ul>
+              </li>
+            {% endif %}
+
+            <li class="nav-item">
+              <span class="nav-link fw-semibold text-muted">🐦‍🔥 {{ request.user.username }}</span>
+            </li>
+            <li class="nav-item"><a class="nav-link text-danger" href="{% url 'logout' %}">Logout</a></li>
+
           {% else %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
           {% endif %}
-          {% if not request.user.is_authenticated %}
-<li class="nav-item dropdown">
-  <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button"
-     data-bs-toggle="dropdown" aria-expanded="false">
-    Login
-  </a>
-  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="loginDropdown">
-    <li><a class="dropdown-item" href="{% url 'login' %}?next=/">Customer Login</a></li>
-    <li><a class="dropdown-item" href="{% url 'login' %}?next=/manager-dashboard">Manager Login</a></li>
-  </ul>
-</li>
-{% endif %}
-
         </ul>
       </div>
     </div>
-    <div>
-      
-    </div>
   </nav>
 
-  <div class="container py-4">
+  <!-- Main content -->
+  <main class="flex-grow-1 container py-5 mt-5">
     {% if messages %}
-    {% for m in messages %}
-    <div class="alert alert-{{ m.tags|default:'info' }} alert-dismissible fade show" role="alert">
-      {{ m }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    {% endfor %}
+      {% for m in messages %}
+      <div class="alert alert-{{ m.tags|default:'info' }} alert-dismissible fade show" role="alert">
+        {{ m }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
     {% endif %}
+
     <div class="row">
-      <div class="col-md-3">
-        
-        <div class="card mb-3">
-          <div class="card-body">
-            <h6>Categories</h6>
-            <div class="list-group category-list">
-              <a href="/" class="list-group-item list-group-item-action">All</a>
-              {% for key,label in products.CATEGORY_CHOICES %}
-              <a href="/?category={{ key }}" class="list-group-item list-group-item-action">{{ label }}</a>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
+      {% if not is_manager %}
+      <aside class="col-md-3 mb-4">
+<div class="card mb-3">
+  <div class="card-body">
+    <h6 class="mb-2">Category Filter</h6>
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary w-100 dropdown-toggle" type="button" id="categoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        {% if request.GET.category %}
+          {{ request.GET.category|title }}
+        {% else %}
+          All Categories
+        {% endif %}
+      </button>
+      <ul class="dropdown-menu w-100" aria-labelledby="categoryDropdown">
+        <li><a class="dropdown-item" href="/">All</a></li>
+        {% for key,label in CATEGORY_CHOICES %}
+          <li><a class="dropdown-item" href="/?category={{ key }}">{{ label }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
 
         <div class="card">
           <div class="card-body">
@@ -151,42 +231,43 @@
                 <label class="form-label small">Sort</label>
                 <select name="ordering" class="form-select form-select-sm">
                   <option value="">Default</option>
-                  <option value="-sold_count" {% if request.GET.ordering == '-sold_count' %}selected{% endif %}>Most
-                    popular</option>
-                  <option value="price" {% if request.GET.ordering == 'price' %}selected{% endif %}>Price: Low → High
-                  </option>
-                  <option value="-price" {% if request.GET.ordering == '-price' %}selected{% endif %}>Price: High → Low
-                  </option>
-
-                  </option>
+                  <option value="-sold_count" {% if request.GET.ordering == '-sold_count' %}selected{% endif %}>Most popular</option>
+                  <option value="price" {% if request.GET.ordering == 'price' %}selected{% endif %}>Price: Low → High</option>
+                  <option value="-price" {% if request.GET.ordering == '-price' %}selected{% endif %}>Price: High → Low</option>
                 </select>
               </div>
-
               <div class="mb-2">
                 <label class="form-label small">Price min</label>
-                <input name="min_price" class="form-control form-control-sm"
-                  value="{{ request.GET.min_price|default:'' }}">
+                <input name="min_price" class="form-control form-control-sm" value="{{ request.GET.min_price|default:'' }}">
               </div>
               <div class="mb-2">
                 <label class="form-label small">Price max</label>
-                <input name="max_price" class="form-control form-control-sm"
-                  value="{{ request.GET.max_price|default:'' }}">
+                <input name="max_price" class="form-control form-control-sm" value="{{ request.GET.max_price|default:'' }}">
               </div>
               <button class="btn btn-sm btn-outline-secondary w-100" type="submit">Apply</button>
             </form>
           </div>
         </div>
- </div>
+      </aside>
+      {% endif %}
 
-      <div class="col-md-9">
+      <section class="{% if not is_manager %}col-md-9{% else %}col-12{% endif %}">
         {% block content %}{% endblock %}
-      </div>
+      </section>
     </div>
-  </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    © 2025 GroceryStore — Built with ❤️ by Yami.
+  </footer>
+
+  <!-- Dark Mode Toggle -->
+  <button id="themeToggle" class="btn btn-outline-dark">🌙</button>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- bug solved by gpt -->
   <script>
+    // --- Cart Function ---
     async function addToCart(productId, qty = 1) {
       const resp = await fetch('/api/orders/cart/add/', {
         method: 'POST',
@@ -194,7 +275,6 @@
         body: JSON.stringify({ product_id: productId, quantity: qty })
       });
       const data = await resp.json();
-
       if (resp.ok) {
         alert('Added to cart');
         location.reload();
@@ -202,8 +282,62 @@
         alert(data.detail || 'Failed to add to cart');
       }
     }
+
+    // --- Dark Mode Script ---
+    const body = document.body;
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('theme');
+
+    if (savedTheme === 'dark') {
+      body.classList.add('dark-mode');
+      themeToggle.textContent = '☀️';
+      themeToggle.classList.replace('btn-outline-dark', 'btn-outline-light');
+    }
+
+    themeToggle.addEventListener('click', () => {
+      body.classList.toggle('dark-mode');
+      const isDark = body.classList.contains('dark-mode');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      themeToggle.textContent = isDark ? '☀️' : '🌙';
+      themeToggle.classList.toggle('btn-outline-light');
+      themeToggle.classList.toggle('btn-outline-dark');
+    });
+
+  // --- Live Search Suggestions ---
+const searchInput = document.querySelector('#searchForm input[name="q"]');
+const suggestionBox = document.getElementById('searchSuggestions');
+
+if (searchInput && suggestionBox) {
+  searchInput.addEventListener('input', async () => {
+    const query = searchInput.value.trim();
+    if (query.length < 2) {
+      suggestionBox.style.display = 'none';
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/products/?search=${encodeURIComponent(query)}`);
+      const data = await res.json();
+
+      if (data && data.results && data.results.length > 0) {
+        suggestionBox.innerHTML = data.results
+          .slice(0, 6)
+          .map(p => `<a href="/product/${p.id}/" class="dropdown-item">${p.name}</a>`)
+          .join('');
+        suggestionBox.style.display = 'block';
+      } else {
+        suggestionBox.innerHTML = '<div class="dropdown-item text-muted small">No matches</div>';
+        suggestionBox.style.display = 'block';
+      }
+    } catch (err) {
+      suggestionBox.style.display = 'none';
+    }
+  });
+
+  // Hide on blur
+  searchInput.addEventListener('blur', () => setTimeout(() => { suggestionBox.style.display = 'none'; }, 200));
+}
+
   </script>
-
 </body>
-
 </html>

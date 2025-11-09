@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load cart_extras %}
-{% load static %}
 {% block content %}
 <div class="row">
   <div class="col-md-8">
@@ -22,7 +21,7 @@
             <td>{{ item.product.name }}</td>
             <td>₹{{ item.product.price }}</td>
             <td>{{ item.quantity }}</td>
-            <td>₹{{ item.product.price|floatformat:2|add:"0" |floatformat:2|floatformat:2 }} × {{ item.quantity }} = ₹{{ item.product.price|mul:item.quantity }}</td>
+            <td>₹{{ item.total_price|floatformat:2 }}</td>
             <td>
               <form method="post" action="{% url 'cart-remove-ui' %}">
                 {% csrf_token %}
@@ -43,7 +42,7 @@
     <div class="card p-3">
       <h5>Summary</h5>
       <p>Items: {{ cart_items|length }}</p>
-      <p>Subtotal: ₹{{ subtotal }}</p>
+      <p>Subtotal: ₹{{ subtotal|floatformat:2 }}</p>
       <form action="{% url 'checkout-page' %}" method="get">
         <button class="btn btn-primary w-100">Proceed to Checkout</button>
       </form>

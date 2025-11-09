@@ -1,16 +1,48 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Your Addresses</h2>
-<a href="{% url 'address_add' %}" class="btn btn-primary">Add New Address</a>
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h3 class="mb-0">Your Addresses</h3>
+  <a class="btn btn-sm btn-outline-primary" href="{% url 'address_add' %}">+ Add Address</a>
+</div>
 
-<ul>
+<div class="row g-3">
   {% for addr in addresses %}
-  <li>
-    <strong>{{ addr.full_name }}</strong> — {{ addr.house_no }}, {{ addr.city }} ({{ addr.pincode }})
-    {% if addr.default %}<span class="badge bg-success">Default</span>{% endif %}
-  </li>
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-start">
+          <div>
+            <h6 class="mb-1">{{ addr.full_name }}</h6>
+            <div class="text-muted small">{{ addr.house_no }}, {{ addr.street }}{% if addr.landmark %}, {{ addr.landmark }}{% endif %}</div>
+            <div class="text-muted small">{{ addr.city }} — {{ addr.state }} • {{ addr.pincode }}</div>
+            <div class="mt-2">
+              <strong>Phone:</strong> {{ addr.phone }}
+            </div>
+          </div>
+
+          <div class="ms-auto text-end">
+            {% if addr.default %}
+              <span class="badge bg-success mb-2">Default</span>
+            {% endif %}
+            <div class="btn-group-vertical">
+              <a class="btn btn-sm btn-outline-secondary mb-1" href="{% url 'address_edit' addr.id %}">Edit</a>
+              <form method="post" action="{% url 'address_delete' addr.id %}">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   {% empty %}
-  <p>No addresses yet. Add one!</p>
+  <div class="col-12">
+    <div class="card p-4 text-center">
+      <p class="mb-1">You don't have any saved addresses yet.</p>
+      <a href="{% url 'address_add' %}" class="btn btn-primary">Add your first address</a>
+    </div>
+  </div>
   {% endfor %}
-</ul>
+</div>
 {% endblock %}

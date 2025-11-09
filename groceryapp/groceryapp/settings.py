@@ -54,6 +54,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'groceryapp.context_processors.cart_and_role',
+                'products.context_processors.product_categories',
             ],
         },
     },
@@ -74,6 +76,8 @@ DATABASES = {
 
 
 AUTH_USER_MODEL = "accounts.User"
+LOGOUT_REDIRECT_URL = '/'
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

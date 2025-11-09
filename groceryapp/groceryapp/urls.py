@@ -6,7 +6,7 @@ from orders.views import CartPageView, AddToCartViewUI, RemoveFromCartViewUI, Ch
 from groceryapp.views import logout_view
 from products.views import product_detail
 from orders.views import MyOrdersView, OrderDetailView
-from products.views import low_stock_alert , product_increment_stock , sales_report
+from products.views import low_stock_alert , manager_product_restock , sales_report
 
 urlpatterns = [
     
@@ -39,7 +39,7 @@ urlpatterns = [
 path('my-orders/<int:pk>/', OrderDetailView.as_view(), name='order-detail'),
 
     path('low-stock/', low_stock_alert, name='low-stock-alert'),
-    path('product/<int:pk>/increment-stock/', product_increment_stock, name='product-increment-stock'),
+    path('product/<int:pk>/increment-stock/', manager_product_restock, name='product-increment-stock'),
     path('sales-report/', sales_report, name='sales-report'),
 
 

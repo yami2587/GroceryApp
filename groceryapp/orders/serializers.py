@@ -11,13 +11,13 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ('id','product','product_id','quantity','added_at')
 
-class WishlistSerializer(serializers.ModelSerializer):
-    product = ProductListSerializer(read_only=True)
-    product_id = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), write_only=True, source='product')
+# class WishlistSerializer(serializers.ModelSerializer):
+#     product = ProductListSerializer(read_only=True)
+#     product_id = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), write_only=True, source='product')
 
-    class Meta:
-        model = WishlistItem
-        fields = ('id','product','product_id','added_at')
+#     class Meta:
+#         model = WishlistItem
+#         fields = ('id','product','product_id','added_at')
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductListSerializer(read_only=True)

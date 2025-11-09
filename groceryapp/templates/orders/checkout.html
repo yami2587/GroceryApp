@@ -1,58 +1,51 @@
 {% extends 'base.html' %}
 {% block content %}
-
 <h3 class="mb-4">Checkout</h3>
+<form id="checkout-form" method="post" action="{% url 'checkout-page' %}">
+{% csrf_token %}
 <div class="row">
   <div class="col-md-8">
     <div class="card mb-4 p-3 shadow-sm">
       <h5>Select Delivery Address</h5>
-      <form id="checkout-form" method="post" action="{% url 'checkout-page' %}">
-        {% csrf_token %}
-        
-        {% if addresses %}
-          <div class="mb-3">
-            <label for="address" class="form-label fw-semibold">Choose from saved addresses</label>
-            <select name="address_id" id="address" class="form-select" required>
-              {% for addr in addresses %}
-                <option value="{{ addr.id }}">
-                  {{ addr.full_name }} - {{ addr.house_no }}, {{ addr.city }} ({{ addr.pincode }})
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-        {% else %}
-          <div class="alert alert-info small">
-            No saved addresses found — please add one first.
-          </div>
-        {% endif %}
-        
-        <a href="{% url 'address_add' %}" class="btn btn-outline-primary btn-sm mb-3">+ Add New Address</a>
 
-        <h5 class="mt-4 mb-3">Your Cart</h5>
-        <ul class="list-group mb-3">
-          {% for item in cart_items %}
-            <li class="list-group-item d-flex justify-content-between align-items-start">
-              <div>
-                <strong>{{ item.product.name }}</strong><br>
-                <small>₹{{ item.product.price }} × {{ item.quantity }}</small>
-              </div>
-              <span>₹{{ item.total_price|floatformat:2 }}</span>
-            </li>
-          {% empty %}
-            <li class="list-group-item text-center text-muted">Your cart is empty 🛒</li>
-          {% endfor %}
-        </ul>
+      {% if addresses %}
+        <div class="mb-3">
+          <label for="address" class="form-label fw-semibold">Choose from saved addresses</label>
+          <select name="address_id" id="address" class="form-select" required>
+            {% for addr in addresses %}
+              <option value="{{ addr.id }}">{{ addr.full_name }} - {{ addr.house_no }}, {{ addr.city }} ({{ addr.pincode }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% else %}
+        <div class="alert alert-info small">No saved addresses found — please add one first.</div>
+      {% endif %}
+
+      <a href="{% url 'address_add' %}" class="btn btn-outline-primary btn-sm mb-3">+ Add New Address</a>
+
+      <h5 class="mt-4 mb-3">Your Cart</h5>
+      <ul class="list-group mb-3">
+        {% for item in cart_items %}
+          <li class="list-group-item d-flex justify-content-between align-items-start">
+            <div>
+              <strong>{{ item.product.name }}</strong><br>
+              <small>₹{{ item.product.price }} × {{ item.quantity }}</small>
+            </div>
+            <span>₹{{ item.total_price|floatformat:2 }}</span>
+          </li>
+        {% empty %}
+          <li class="list-group-item text-center text-muted">Your cart is empty 🛒</li>
+        {% endfor %}
+      </ul>
     </div>
   </div>
 
   <div class="col-md-4">
     <div class="card p-3 shadow-sm">
       <h5>Order Summary</h5>
-      <p class="mb-1">Subtotal: ₹{{ subtotal|floatformat:2 }}</p>
-      {% if discount %}
-        <p class="text-success small">Discount Applied: -₹{{ discount_amount|floatformat:2 }}</p>
-      {% endif %}
-      <p class="fw-bold">Total: ₹{{ total|floatformat:2 }}</p>
+      <p class="mb-1">Subtotal: ₹<span id="subtotal">{{ subtotal|floatformat:2 }}</span></p>
+      <p class="text-success small" id="discount-row" style="display:none">Discount Applied: -₹<span id="discount-amount">0.00</span></p>
+      <p class="fw-bold">Total: ₹<span id="final-total">{{ subtotal|floatformat:2 }}</span></p>
 
       <div class="mb-3">
         <label class="form-label small fw-semibold">Promo Code</label>
@@ -65,9 +58,7 @@
 
       <hr>
 
-      <button type="submit" class="btn btn-success w-100 mt-2">
-        Place Order (Simulate Payment)
-      </button>
+      <button type="submit" class="btn btn-success w-100 mt-2">Place Order (Simulate Payment)</button>
     </div>
   </div>
 </div>
@@ -76,36 +67,48 @@
 <script>
 document.getElementById('promo-check-btn').addEventListener('click', async function (e) {
   e.preventDefault();
-  const codeInput = document.getElementById('promo-code-input');
-  const code = codeInput.value.trim();
+  const code = document.getElementById('promo-code-input').value.trim();
   const feedback = document.getElementById('promo-feedback');
+  const subtotalEl = document.getElementById('subtotal');
+  const finalEl = document.getElementById('final-total');
+  const discountRow = document.getElementById('discount-row');
+  const discountAmountEl = document.getElementById('discount-amount');
 
   if (!code) {
     feedback.style.display = 'block';
-    feedback.textContent = 'Please enter a promo code first!';
     feedback.className = 'form-text text-danger';
+    feedback.textContent = 'Please enter a promo code first!';
     return;
   }
 
   try {
- const resp = await fetch("{% url 'validate-promo' %}?code=" + encodeURIComponent(code));
-
+    const resp = await fetch("{% url 'validate-promo' %}?code=" + encodeURIComponent(code));
     const data = await resp.json();
+    feedback.style.display = 'block';
 
-    feedback.style.display = 'block';
     if (data.valid) {
-      feedback.textContent = ` Code applied! Discount: ${data.discount_percent}%`;
+      const subtotal = parseFloat(subtotalEl.textContent || '0');
+      const discount = subtotal * (parseFloat(data.discount_percent) / 100);
+      const finalTotal = subtotal - discount;
+
+      discountRow.style.display = 'block';
+      discountAmountEl.textContent = discount.toFixed(2);
+      finalEl.textContent = finalTotal.toFixed(2);
+
       feedback.className = 'form-text text-success';
+      feedback.textContent = `Promo applied! ${data.discount_percent}% off`;
     } else {
-      feedback.textContent = ` Invalid or expired promo code`;
+      discountRow.style.display = 'none';
+      discountAmountEl.textContent = '0.00';
+      finalEl.textContent = subtotalEl.textContent;
       feedback.className = 'form-text text-danger';
+      feedback.textContent = 'Invalid or expired promo code.';
     }
-  } catch (error) {
+  } catch (err) {
     feedback.style.display = 'block';
-    feedback.textContent = ' Error validating promo code. Try again later.';
     feedback.className = 'form-text text-warning';
+    feedback.textContent = 'Error validating promo. Try again.';
   }
 });
 </script>
-
 {% endblock %}
