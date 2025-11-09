@@ -8,6 +8,10 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    
+        path('addresses/', views.address_list, name='address_list'),
+    path('addresses/add/', views.address_add, name='address_add'),
+    
     path('toggle-manager/', ToggleManagerView.as_view(), name='toggle-manager'),
      # API
     path('api/register/', views.RegisterView.as_view(), name='api_register'),

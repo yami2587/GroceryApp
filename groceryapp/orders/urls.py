@@ -1,7 +1,9 @@
 from django.urls import path
+from . import views
 from .views import (
     CartListView, AddToCartView, RemoveFromCartView, CheckoutView,
-    WishlistListView, AddWishlistView, RemoveWishlistView , validate_promo
+    WishlistListView, AddWishlistView, RemoveWishlistView , validate_promo, CheckoutPageView, OrderSuccessView, MyOrdersView, OrderDetailView
+
 )
 
 urlpatterns = [
@@ -16,5 +18,13 @@ urlpatterns = [
     path('wishlist-ui/', WishlistListView.as_view(), name='wishlist-ui'),
 path('wishlist/remove-ui/', RemoveWishlistView.as_view(), name='wishlist-remove'),
 path('promo/validate/', validate_promo, name='promo-validate'),
+
+
+    path('order-success/<int:pk>/', OrderSuccessView.as_view(), name='order-success'),
+    path('my-orders/', MyOrdersView.as_view(), name='my-orders'),
+    path('order/<int:pk>/', OrderDetailView.as_view(), name='order-detail'),
+    path('validate-promo/', views.validate_promo, name='validate-promo'),
+
+
 
 ]

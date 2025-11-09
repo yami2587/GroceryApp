@@ -1,56 +1,111 @@
 {% extends 'base.html' %}
 {% block content %}
-<h3>Checkout</h3>
+
+<h3 class="mb-4">Checkout</h3>
 <div class="row">
   <div class="col-md-8">
-    <ul class="list-group mb-3">
-      {% for item in cart_items %}
-      <li class="list-group-item d-flex justify-content-between align-items-start">
-        <div>
-          <strong>{{ item.product.name }}</strong><br>
-          <small>₹{{ item.product.price }} × {{ item.quantity }}</small>
-        </div>
-        <span>₹{{ item.product.price|floatformat:2|add:"0"|floatformat:2 }}</span>
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
-  <div class="col-md-4">
-    <div class="card p-3">
-      <h5>Order Summary</h5>
-      <p>Subtotal: ₹{{ subtotal }}</p>
-      <form method="post" action="{% url 'checkout-page' %}">
+    <div class="card mb-4 p-3 shadow-sm">
+      <h5>Select Delivery Address</h5>
+      <form id="checkout-form" method="post" action="{% url 'checkout-page' %}">
         {% csrf_token %}
-        <form method="post" action="{% url 'checkout-page' %}">
-
-          <div class="mb-2">
-            <label class="form-label small">Promo code</label>
-            <input name="promo_code" class="form-control form-control-sm" placeholder="Enter promo code (optional)">
+        
+        {% if addresses %}
+          <div class="mb-3">
+            <label for="address" class="form-label fw-semibold">Choose from saved addresses</label>
+            <select name="address_id" id="address" class="form-select" required>
+              {% for addr in addresses %}
+                <option value="{{ addr.id }}">
+                  {{ addr.full_name }} - {{ addr.house_no }}, {{ addr.city }} ({{ addr.pincode }})
+                </option>
+              {% endfor %}
+            </select>
           </div>
-          <button class="btn btn-success w-100">Place Order (simulate payment)</button>
-        </form>
+        {% else %}
+          <div class="alert alert-info small">
+            No saved addresses found — please add one first.
+          </div>
+        {% endif %}
+        
+        <a href="{% url 'address_add' %}" class="btn btn-outline-primary btn-sm mb-3">+ Add New Address</a>
 
-        <button class="btn btn-success w-100">Place Order (simulate)</button>
-      </form>
+        <h5 class="mt-4 mb-3">Your Cart</h5>
+        <ul class="list-group mb-3">
+          {% for item in cart_items %}
+            <li class="list-group-item d-flex justify-content-between align-items-start">
+              <div>
+                <strong>{{ item.product.name }}</strong><br>
+                <small>₹{{ item.product.price }} × {{ item.quantity }}</small>
+              </div>
+              <span>₹{{ item.total_price|floatformat:2 }}</span>
+            </li>
+          {% empty %}
+            <li class="list-group-item text-center text-muted">Your cart is empty 🛒</li>
+          {% endfor %}
+        </ul>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card p-3 shadow-sm">
+      <h5>Order Summary</h5>
+      <p class="mb-1">Subtotal: ₹{{ subtotal|floatformat:2 }}</p>
+      {% if discount %}
+        <p class="text-success small">Discount Applied: -₹{{ discount_amount|floatformat:2 }}</p>
+      {% endif %}
+      <p class="fw-bold">Total: ₹{{ total|floatformat:2 }}</p>
+
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">Promo Code</label>
+        <div class="input-group input-group-sm">
+          <input id="promo-code-input" name="promo_code" class="form-control" placeholder="Enter promo code (optional)">
+          <button id="promo-check-btn" class="btn btn-outline-secondary" type="button">Apply</button>
+        </div>
+        <div id="promo-feedback" class="form-text mt-1" style="display: none;"></div>
+      </div>
+
+      <hr>
+
+      <button type="submit" class="btn btn-success w-100 mt-2">
+        Place Order (Simulate Payment)
+      </button>
     </div>
   </div>
 </div>
+</form>
+
 <script>
-  
-    document.getElementById('promo-check-btn').addEventListener('click', async function(e){
-      e.preventDefault();
-    const code = document.getElementById('promo-code-input').value.trim();
-    if(!code) return alert('Enter code');
-    const resp = await fetch(`/orders/promo/validate/?code=${encodeURIComponent(code)}`);
-  const data = await resp.json();
-  if(data.valid) {
-    alert('Valid! Discount: ' + data.discount_percent + '%');
-   
-  } else {
-    alert('Invalid or expired promo code');
+document.getElementById('promo-check-btn').addEventListener('click', async function (e) {
+  e.preventDefault();
+  const codeInput = document.getElementById('promo-code-input');
+  const code = codeInput.value.trim();
+  const feedback = document.getElementById('promo-feedback');
+
+  if (!code) {
+    feedback.style.display = 'block';
+    feedback.textContent = 'Please enter a promo code first!';
+    feedback.className = 'form-text text-danger';
+    return;
+  }
+
+  try {
+ const resp = await fetch("{% url 'validate-promo' %}?code=" + encodeURIComponent(code));
+
+    const data = await resp.json();
+
+    feedback.style.display = 'block';
+    if (data.valid) {
+      feedback.textContent = ` Code applied! Discount: ${data.discount_percent}%`;
+      feedback.className = 'form-text text-success';
+    } else {
+      feedback.textContent = ` Invalid or expired promo code`;
+      feedback.className = 'form-text text-danger';
+    }
+  } catch (error) {
+    feedback.style.display = 'block';
+    feedback.textContent = ' Error validating promo code. Try again later.';
+    feedback.className = 'form-text text-warning';
   }
 });
 </script>
-
 
 {% endblock %}

@@ -14,6 +14,8 @@ from django.shortcuts import render, redirect
 from products.models import Product
 from orders.models import Order
 
+from .models import Address
+
 User = get_user_model()
 # ---------------
 
@@ -49,7 +51,7 @@ class ToggleManagerView(APIView):
         return Response({"username": target.username, "role": target.role})
     
 def is_manager(user):
-    return user.is_authenticated and user.is_manager
+    return user.is_authenticated and  user.role == 'manager'
 
 @login_required
 @user_passes_test(is_manager)
@@ -112,3 +114,26 @@ def logout_view(request):
     logout(request)
     messages.info(request, "You have been logged out.")
     return redirect('login')
+
+@login_required
+def address_list(request):
+    addresses = Address.objects.filter(user=request.user)
+    return render(request, 'accounts/address_list.html', {'addresses': addresses})
+
+@login_required
+def address_add(request):
+    if request.method == 'POST':
+        Address.objects.create(
+            user=request.user,
+            full_name=request.POST['full_name'],
+            phone=request.POST['phone'],
+            house_no=request.POST['house_no'],
+            street=request.POST['street'],
+            city=request.POST['city'],
+            state=request.POST['state'],
+            pincode=request.POST['pincode'],
+            landmark=request.POST.get('landmark', ''),
+            default=('default' in request.POST)
+        )
+        return redirect('address_list')
+    return render(request, 'accounts/address_form.html')

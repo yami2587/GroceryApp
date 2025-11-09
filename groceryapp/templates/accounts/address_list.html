@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Your Addresses</h2>
+<a href="{% url 'address_add' %}" class="btn btn-primary">Add New Address</a>
+
+<ul>
+  {% for addr in addresses %}
+  <li>
+    <strong>{{ addr.full_name }}</strong> — {{ addr.house_no }}, {{ addr.city }} ({{ addr.pincode }})
+    {% if addr.default %}<span class="badge bg-success">Default</span>{% endif %}
+  </li>
+  {% empty %}
+  <p>No addresses yet. Add one!</p>
+  {% endfor %}
+</ul>
+{% endblock %}

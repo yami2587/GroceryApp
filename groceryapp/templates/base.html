@@ -15,6 +15,38 @@
     .category-list .nav-link {
       padding: .25rem .5rem;
     }
+    body {
+  background-color: #f8f9fa;
+}
+
+.navbar-brand {
+  font-weight: 600;
+}
+
+.card {
+  border-radius: 12px;
+  transition: 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.list-group-item-action:hover {
+  background-color: #f1f1f1;
+  color: #0d6efd;
+}
+
+@media (max-width: 768px) {
+  .category-list, .card-body form {
+    text-align: center;
+  }
+  .navbar-brand {
+    font-size: 1rem;
+  }
+}
+
   </style>
 </head>
 
@@ -34,9 +66,6 @@
             <option value="">All categories</option>
             {% for key,label in products.CATEGORY_CHOICES %}
             <option value="{{ key }}" {% if request.GET.category == key %}selected{% endif %}>{{ label }}</option>
-
-
-
             {% endfor %}
           </select>
           <button class="btn btn-outline-primary btn-sm" type="submit">Search</button>
@@ -51,22 +80,42 @@
               {% endif %}
             </a></li>
           {% if is_manager %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">Manager</a>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="{% url 'admin:index' %}">Admin</a></li>
-              <li><a class="dropdown-item" href="{% url 'low-stock-alert' %}">Low Stock</a></li>
-              <li><a class="dropdown-item" href="{% url 'sales-report' %}">Sales Report</a></li>
-            </ul>
-          </li>
+<li class="nav-item dropdown">
+  <a class="nav-link dropdown-toggle" href="#" id="managerDropdown" role="button"
+     data-bs-toggle="dropdown" aria-expanded="false">
+    Manager
+  </a>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="managerDropdown">
+    <li><a class="dropdown-item" href="{% url 'admin:index' %}">Admin Dashboard</a></li>
+    <li><a class="dropdown-item" href="{% url 'low-stock-alert' %}">Low Stock Alerts</a></li>
+    <li><a class="dropdown-item" href="{% url 'sales-report' %}">Sales Report</a></li>
+  </ul>
+</li>
+
           {% endif %}
           <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
           {% else %}
           <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
           {% endif %}
+          {% if not request.user.is_authenticated %}
+<li class="nav-item dropdown">
+  <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button"
+     data-bs-toggle="dropdown" aria-expanded="false">
+    Login
+  </a>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="loginDropdown">
+    <li><a class="dropdown-item" href="{% url 'login' %}?next=/">Customer Login</a></li>
+    <li><a class="dropdown-item" href="{% url 'login' %}?next=/manager-dashboard">Manager Login</a></li>
+  </ul>
+</li>
+{% endif %}
+
         </ul>
       </div>
+    </div>
+    <div>
+      
     </div>
   </nav>
 
@@ -81,6 +130,7 @@
     {% endif %}
     <div class="row">
       <div class="col-md-3">
+        
         <div class="card mb-3">
           <div class="card-body">
             <h6>Categories</h6>
@@ -126,8 +176,7 @@
             </form>
           </div>
         </div>
-
-      </div>
+ </div>
 
       <div class="col-md-9">
         {% block content %}{% endblock %}
@@ -145,7 +194,7 @@
         body: JSON.stringify({ product_id: productId, quantity: qty })
       });
       const data = await resp.json();
-     
+
       if (resp.ok) {
         alert('Added to cart');
         location.reload();

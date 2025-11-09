@@ -31,6 +31,7 @@ class ShippingAddress(models.Model):
     full_name = models.CharField(max_length=200)
     phone = models.CharField(max_length=30, blank=True)
     address_line1 = models.CharField(max_length=255)
+    street = models.CharField(max_length=255,blank=True)
     address_line2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100, blank=True)
@@ -40,18 +41,6 @@ class ShippingAddress(models.Model):
 
     def __str__(self):
         return f"{self.full_name} • {self.address_line1}"
-
-class Order(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
-    shipping_address = models.ForeignKey(ShippingAddress, null=True, blank=True, on_delete=models.SET_NULL)
-    total_price = models.DecimalField(max_digits=12, decimal_places=2)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.PROTECT)
-    quantity = models.PositiveIntegerField()
-    price_when_bought = models.DecimalField(max_digits=10, decimal_places=2)
     
 class PromoCode(models.Model):
     code = models.CharField(max_length=32, unique=True)
@@ -61,14 +50,33 @@ class PromoCode(models.Model):
     expires_at = models.DateTimeField(null=True, blank=True)
 
     def is_valid(self):
+        from django.utils import timezone
+        now = timezone.now()
         if not self.active:
             return False
-        if self.expires_at and timezone.now() > self.expires_at:
+        if self.expires_at and now > self.expires_at:
             return False
         return True
 
+
     def __str__(self):
         return f"{self.code} - {self.discount_percent}%"
+
+
+class Order(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    shipping_address = models.ForeignKey(ShippingAddress, null=True, blank=True, on_delete=models.SET_NULL ,)
+    total_price = models.DecimalField(max_digits=12, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+    promo_code = models.ForeignKey(PromoCode, null=True, blank=True, on_delete=models.SET_NULL)
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField()
+    price_when_bought = models.DecimalField(max_digits=10, decimal_places=2)
+    
 
 class Payment(models.Model):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add Address</h2>
+
+<form method="POST">
+  {% csrf_token %}
+  <input type="text" name="full_name" placeholder="Full Name" required><br>
+  <input type="text" name="phone" placeholder="Phone" required><br>
+  <input type="text" name="house_no" placeholder="House No." required><br>
+  <input type="text" name="street" placeholder="Street" required><br>
+  <input type="text" name="city" placeholder="City" required><br>
+  <input type="text" name="state" placeholder="State" required><br>
+  <input type="text" name="pincode" placeholder="Pincode" required><br>
+  <input type="text" name="landmark" placeholder="Landmark (optional)"><br>
+  <label><input type="checkbox" name="default"> Set as default</label><br><br>
+  <button type="submit">Save</button>
+</form>
+{% endblock %}

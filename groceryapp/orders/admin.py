@@ -20,8 +20,10 @@ class WishlistAdmin(admin.ModelAdmin):
     list_display = ('user','product','added_at')
 
 @admin.register(PromoCode)
-class PromoAdmin(admin.ModelAdmin):
-    list_display = ('code','discount_percent','active','expires_at')
+class PromoCodeAdmin(admin.ModelAdmin):
+    list_display = ('code', 'discount_percent', 'active', 'expires_at')
+    list_filter = ('active',)
+    search_fields = ('code',)
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
