@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect
 from products.models import Product
 from orders.models import Order
-
+from django.shortcuts import get_object_or_404
 from .models import Address
 
 User = get_user_model()
@@ -119,20 +119,77 @@ def address_list(request):
     addresses = Address.objects.filter(user=request.user)
     return render(request, 'accounts/address_list.html', {'addresses': addresses})
 
+# @login_required
+# def address_add(request):
+#     if request.method == 'POST':
+#         Address.objects.create(
+#             user=request.user,
+#             full_name=request.POST['full_name'],
+#             phone=request.POST['phone'],
+#             house_no=request.POST['house_no'],
+#             street=request.POST['street'],
+#             city=request.POST['city'],
+#             state=request.POST['state'],
+#             pincode=request.POST['pincode'],
+#             landmark=request.POST.get('landmark', ''),
+#             default=('default' in request.POST)
+#         )
+#         return redirect('address_list')
+#     return render(request, 'accounts/address_form.html')
 @login_required
 def address_add(request):
     if request.method == 'POST':
         Address.objects.create(
             user=request.user,
-            full_name=request.POST['full_name'],
-            phone=request.POST['phone'],
-            house_no=request.POST['house_no'],
-            street=request.POST['street'],
-            city=request.POST['city'],
-            state=request.POST['state'],
-            pincode=request.POST['pincode'],
+            full_name=request.POST.get('full_name', ''),
+            phone=request.POST.get('phone', ''),
+            house_no=request.POST.get('house_no', ''),
+            street=request.POST.get('street', ''),
+            city=request.POST.get('city', ''),
+            state=request.POST.get('state', ''),
+            pincode=request.POST.get('pincode', ''),
             landmark=request.POST.get('landmark', ''),
             default=('default' in request.POST)
         )
         return redirect('address_list')
-    return render(request, 'accounts/address_form.html')
+
+    empty_addr = Address(
+        full_name='',
+        phone='',
+        house_no='',
+        street='',
+        city='',
+        state='',
+        pincode='',
+        landmark='',
+    )
+    return render(request, 'accounts/address_form.html', {'addr': empty_addr})
+
+
+@login_required
+def address_edit(request, pk):
+    addr = get_object_or_404(Address, pk=pk, user=request.user)
+    if request.method == 'POST':
+        addr.full_name = request.POST.get('full_name', '')
+        addr.phone = request.POST.get('phone', '')
+        addr.house_no = request.POST.get('house_no', '')
+        addr.street = request.POST.get('street', '')
+        addr.city = request.POST.get('city', '')
+        addr.state = request.POST.get('state', '')
+        addr.pincode = request.POST.get('pincode', '')
+        addr.landmark = request.POST.get('landmark', '')
+        addr.default = 'default' in request.POST
+        addr.save()
+        messages.success(request, "Address updated successfully.")
+        return redirect('address_list')
+    return render(request, 'accounts/address_form.html', {'addr': addr})
+
+
+@login_required
+def address_delete(request, pk):
+    addr = get_object_or_404(Address, pk=pk, user=request.user)
+    if request.method == 'POST':
+        addr.delete()
+        messages.info(request, "Address deleted.")
+        return redirect('address_list')
+    return render(request, 'accounts/address_confirm_delete.html', {'addr': addr})

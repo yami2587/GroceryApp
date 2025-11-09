@@ -1,71 +1,73 @@
 {% extends 'base.html' %}
 {% block content %}
-<h3 class="mb-4">Checkout</h3>
-<form id="checkout-form" method="post" action="{% url 'checkout-page' %}">
-{% csrf_token %}
-<div class="row">
-  <div class="col-md-8">
-    <div class="card mb-4 p-3 shadow-sm">
-      <h5>Select Delivery Address</h5>
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h3 class="mb-4">Checkout</h3>
+          <form id="checkout-form" method="post" action="{% url 'checkout-page' %}">
+            {% csrf_token %}
+            <div class="row g-4">
+              <div class="col-md-8">
+                <div class="p-3 border rounded bg-light-subtle">
+                  <h5 class="fw-semibold">Delivery Address</h5>
+                  {% if addresses %}
+                    <select name="address_id" id="address" class="form-select mt-2" required>
+                      {% for addr in addresses %}
+                        <option value="{{ addr.id }}">{{ addr.full_name }} — {{ addr.house_no }}, {{ addr.city }} ({{ addr.pincode }})</option>
+                      {% endfor %}
+                    </select>
+                  {% else %}
+                    <div class="alert alert-info small mt-3">No saved addresses — add one below.</div>
+                  {% endif %}
+                  <a href="{% url 'address_add' %}" class="btn btn-outline-primary btn-sm mt-2">+ Add New Address</a>
+                </div>
 
-      {% if addresses %}
-        <div class="mb-3">
-          <label for="address" class="form-label fw-semibold">Choose from saved addresses</label>
-          <select name="address_id" id="address" class="form-select" required>
-            {% for addr in addresses %}
-              <option value="{{ addr.id }}">{{ addr.full_name }} - {{ addr.house_no }}, {{ addr.city }} ({{ addr.pincode }})</option>
-            {% endfor %}
-          </select>
-        </div>
-      {% else %}
-        <div class="alert alert-info small">No saved addresses found — please add one first.</div>
-      {% endif %}
+                <h5 class="mt-4 mb-2">Your Cart</h5>
+                <ul class="list-group shadow-sm">
+                  {% for item in cart_items %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong>{{ item.product.name }}</strong>
+                      <br><small class="text-muted">₹{{ item.product.price }} × {{ item.quantity }}</small>
+                    </div>
+                    <span>₹{{ item.total_price|floatformat:2 }}</span>
+                  </li>
+                  {% empty %}
+                  <li class="list-group-item text-center text-muted">Cart empty 🛒</li>
+                  {% endfor %}
+                </ul>
+              </div>
 
-      <a href="{% url 'address_add' %}" class="btn btn-outline-primary btn-sm mb-3">+ Add New Address</a>
+              <div class="col-md-4">
+                <div class="border rounded p-3 bg-light-subtle">
+                  <h5 class="fw-semibold mb-3">Order Summary</h5>
+                  <p>Subtotal: ₹<span id="subtotal">{{ subtotal|floatformat:2 }}</span></p>
+                  <p id="discount-row" style="display:none" class="text-success small">
+                    Discount: -₹<span id="discount-amount">0.00</span>
+                  </p>
+                  <p class="fw-bold">Total: ₹<span id="final-total">{{ subtotal|floatformat:2 }}</span></p>
 
-      <h5 class="mt-4 mb-3">Your Cart</h5>
-      <ul class="list-group mb-3">
-        {% for item in cart_items %}
-          <li class="list-group-item d-flex justify-content-between align-items-start">
-            <div>
-              <strong>{{ item.product.name }}</strong><br>
-              <small>₹{{ item.product.price }} × {{ item.quantity }}</small>
+                  <div class="input-group input-group-sm mb-3 mt-2">
+                    <input id="promo-code-input" name="promo_code" class="form-control" placeholder="Promo code">
+                    <button id="promo-check-btn" class="btn btn-outline-secondary" type="button">Apply</button>
+                  </div>
+                  <div id="promo-feedback" class="form-text mt-1" style="display:none;"></div>
+
+                  <button type="submit" class="btn btn-success w-100 mt-3 btn-lg">Place Order</button>
+                </div>
+              </div>
             </div>
-            <span>₹{{ item.total_price|floatformat:2 }}</span>
-          </li>
-        {% empty %}
-          <li class="list-group-item text-center text-muted">Your cart is empty 🛒</li>
-        {% endfor %}
-      </ul>
-    </div>
-  </div>
-
-  <div class="col-md-4">
-    <div class="card p-3 shadow-sm">
-      <h5>Order Summary</h5>
-      <p class="mb-1">Subtotal: ₹<span id="subtotal">{{ subtotal|floatformat:2 }}</span></p>
-      <p class="text-success small" id="discount-row" style="display:none">Discount Applied: -₹<span id="discount-amount">0.00</span></p>
-      <p class="fw-bold">Total: ₹<span id="final-total">{{ subtotal|floatformat:2 }}</span></p>
-
-      <div class="mb-3">
-        <label class="form-label small fw-semibold">Promo Code</label>
-        <div class="input-group input-group-sm">
-          <input id="promo-code-input" name="promo_code" class="form-control" placeholder="Enter promo code (optional)">
-          <button id="promo-check-btn" class="btn btn-outline-secondary" type="button">Apply</button>
+          </form>
         </div>
-        <div id="promo-feedback" class="form-text mt-1" style="display: none;"></div>
       </div>
-
-      <hr>
-
-      <button type="submit" class="btn btn-success w-100 mt-2">Place Order (Simulate Payment)</button>
     </div>
   </div>
 </div>
-</form>
 
 <script>
-document.getElementById('promo-check-btn').addEventListener('click', async function (e) {
+document.getElementById('promo-check-btn').addEventListener('click', async (e) => {
   e.preventDefault();
   const code = document.getElementById('promo-code-input').value.trim();
   const feedback = document.getElementById('promo-feedback');
@@ -77,37 +79,33 @@ document.getElementById('promo-check-btn').addEventListener('click', async funct
   if (!code) {
     feedback.style.display = 'block';
     feedback.className = 'form-text text-danger';
-    feedback.textContent = 'Please enter a promo code first!';
+    feedback.textContent = 'Enter promo code first.';
     return;
   }
 
   try {
     const resp = await fetch("{% url 'validate-promo' %}?code=" + encodeURIComponent(code));
     const data = await resp.json();
-    feedback.style.display = 'block';
-
+    const subtotal = parseFloat(subtotalEl.textContent || '0');
     if (data.valid) {
-      const subtotal = parseFloat(subtotalEl.textContent || '0');
-      const discount = subtotal * (parseFloat(data.discount_percent) / 100);
-      const finalTotal = subtotal - discount;
-
+      const discount = subtotal * (data.discount_percent / 100);
       discountRow.style.display = 'block';
       discountAmountEl.textContent = discount.toFixed(2);
-      finalEl.textContent = finalTotal.toFixed(2);
-
+      finalEl.textContent = (subtotal - discount).toFixed(2);
       feedback.className = 'form-text text-success';
-      feedback.textContent = `Promo applied! ${data.discount_percent}% off`;
+      feedback.textContent = `✔ ${data.discount_percent}% off applied`;
     } else {
       discountRow.style.display = 'none';
       discountAmountEl.textContent = '0.00';
-      finalEl.textContent = subtotalEl.textContent;
+      finalEl.textContent = subtotal.toFixed(2);
       feedback.className = 'form-text text-danger';
-      feedback.textContent = 'Invalid or expired promo code.';
+      feedback.textContent = 'Invalid or expired code.';
     }
-  } catch (err) {
     feedback.style.display = 'block';
+  } catch {
     feedback.className = 'form-text text-warning';
-    feedback.textContent = 'Error validating promo. Try again.';
+    feedback.textContent = 'Error checking promo code.';
+    feedback.style.display = 'block';
   }
 });
 </script>

@@ -1,45 +1,110 @@
 {% extends 'manager/manager_base.html' %}
 {% block manager_content %}
-<h3>Manager Dashboard</h3>
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="fw-semibold">📊 Manager Dashboard</h2>
+    <a href="{% url 'manager_product_add' %}" class="btn btn-success">+ Add Product</a>
+  </div>
 
-<div class="row mb-3">
-  <div class="col-md-4">
-    <div class="card p-3">
-      <h5>Total products</h5>
-      <p class="display-6">{{ total_products }}</p>
+  <!-- Summary Section -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h6 class="text-muted small mb-1">Total Products</h6>
+          <h3 class="fw-bold text-primary">{{ total_products }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h6 class="text-muted small mb-1">Low Stock Products</h6>
+          <h3 class="fw-bold text-warning">{{ total_low_stock }}</h3>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card p-3">
-      <h5>Low stock items ({{ total_low_stock }})</h5>
-      <ul class="list-unstyled">
-        {% for p in low_stock %}
-          <li>{{ p.name }} — {{ p.stock }}</li>
-        {% endfor %}
-      </ul>
+
+  <!-- Low Stock Alerts -->
+  {% if low_stock %}
+  <div class="alert alert-warning shadow-sm">
+    <strong>⚠ Low Stock Alert:</strong>
+    <ul class="mb-0 mt-2">
+      {% for p in low_stock %}
+        <li>{{ p.name }} — only {{ p.stock }} left</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- Product Table -->
+  <div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0 fw-semibold">📦 Product Inventory</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Image</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+          <tr>
+            <td style="width: 60px;">
+              {% if product.image %}
+                <img src="{{ product.image.url }}" class="rounded" style="width:55px; height:55px; object-fit:cover;">
+              {% elif product.image_url %}
+                <img src="{{ product.image_url }}" class="rounded" style="width:55px; height:55px; object-fit:cover;">
+              {% else %}
+                <img src="https://via.placeholder.com/55x55?text=No+Img" class="rounded">
+              {% endif %}
+            </td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.get_category_display }}</td>
+            <td>₹{{ product.price }}</td>
+            <td>
+              {% if product.stock == 0 %}
+                <span class="badge bg-danger">Out of Stock</span>
+              {% elif product.stock < 10 %}
+                <span class="badge bg-warning text-dark">Low ({{ product.stock }})</span>
+              {% else %}
+                <span class="badge bg-success">{{ product.stock }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'manager_product_edit' product.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+              <a href="{% url 'manager_product_restock' product.id %}" class="btn btn-sm btn-outline-warning">Restock</a>
+              <a href="{% url 'manager_product_delete' product.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-3">No products available.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
 
-
-
-<h4>All products</h4>
-<table class="table">
-  <thead><tr><th>Name</th><th>Category</th><th>Stock</th><th>Price</th><th>Actions</th></tr></thead>
-  <tbody>
-    {% for product in products %}
-    <tr>
-      <td>{{ product.name }}</td>
-      <td>{{ product.get_category_display }}</td>
-      <td>{{ product.stock }}</td>
-      <td>₹{{ product.price }}</td>
-      <td>
-        <a class="btn btn-sm btn-info" href="{% url 'manager_product_edit' product.id %}">Edit</a>
-        <a class="btn btn-sm btn-warning" href="{% url 'manager_product_restock' product.id %}">Restock</a>
-        <a class="btn btn-sm btn-danger" href="{% url 'manager_product_delete' product.id %}">Delete</a>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<style>
+  .table td, .table th {
+    vertical-align: middle;
+  }
+  .card {
+    border-radius: 10px;
+  }
+  .card-header {
+    border-bottom: 1px solid #eee;
+  }
+</style>
 {% endblock %}

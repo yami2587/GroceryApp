@@ -7,6 +7,9 @@ from groceryapp.views import logout_view
 from products.views import product_detail
 from orders.views import MyOrdersView, OrderDetailView
 from products.views import low_stock_alert , manager_product_restock , sales_report
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 urlpatterns = [
     
@@ -46,4 +49,4 @@ path('my-orders/<int:pk>/', OrderDetailView.as_view(), name='order-detail'),
 
 
 ]
-
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

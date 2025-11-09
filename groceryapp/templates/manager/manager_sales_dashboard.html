@@ -1,0 +1,187 @@
+{% extends 'manager/manager_base.html' %}
+{% block manager_content %}
+<div class="container-fluid py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-semibold">📈 Sales & Orders Dashboard</h3>
+    <div>
+      <form method="get" class="d-flex gap-2">
+        <select name="view" class="form-select form-select-sm">
+          <option value="all" {% if view_type == 'all' %}selected{% endif %}>All Time</option>
+          <option value="year" {% if view_type == 'year' %}selected{% endif %}>This Year</option>
+          <option value="month" {% if view_type == 'month' %}selected{% endif %}>This Month</option>
+        </select>
+        <button class="btn btn-sm btn-outline-primary">Filter</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+      <div class="card text-center shadow-sm border-0">
+        <div class="card-body">
+          <h6 class="text-muted small">Total Orders</h6>
+          <h3 class="fw-bold text-primary">{{ total_orders }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card text-center shadow-sm border-0">
+        <div class="card-body">
+          <h6 class="text-muted small">Total Customers</h6>
+          <h3 class="fw-bold text-success">{{ total_customers }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card text-center shadow-sm border-0">
+        <div class="card-body">
+          <h6 class="text-muted small">Total Sales</h6>
+          <h3 class="fw-bold text-success">₹{{ total_sales|floatformat:2 }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <h5 class="fw-semibold mb-3">📦 All Orders</h5>
+      <div class="table-responsive">
+        <table class="table align-middle table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Update</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+            <tr>
+              <td>#{{ order.id }}</td>
+              <td>{{ order.user.username }}</td>
+              <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+              <td>₹{{ order.total_price }}</td>
+              <td>
+                <span class="badge 
+                  {% if order.status == 'PENDING' %}bg-warning
+                  {% elif order.status == 'PAID' %}bg-info
+                  {% elif order.status == 'SHIPPED' %}bg-primary
+                  {% elif order.status == 'DELIVERED' %}bg-success
+                  {% elif order.status == 'CANCELLED' %}bg-danger
+                  {% endif %}">
+                  {{ order.get_status_display }}
+                </span>
+              </td>
+              <td>
+                <form method="post" action="{% url 'update-order-status' order.id %}" class="d-flex gap-2">
+                  {% csrf_token %}
+                  <select name="status" class="form-select form-select-sm">
+                    {% for key,val in order.STATUS_CHOICES %}
+                    <option value="{{ key }}" {% if order.status == key %}selected{% endif %}>{{ val }}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="btn btn-sm btn-outline-success">Save</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted">No orders yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <hr class="my-4">
+
+  <!-- Monthly & Yearly Charts -->
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h6 class="fw-semibold mb-3">📅 Monthly Sales</h6>
+          <canvas id="monthlyChart" height="150"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h6 class="fw-semibold mb-3">📊 Yearly Sales</h6>
+          <canvas id="yearlyChart" height="150"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% load static %}
+{% load tz %}
+
+<script id="monthly-sales" type="application/json">
+  {{ monthly_sales|json_script:"monthly-sales" }}
+</script>
+<script id="yearly-sales" type="application/json">
+  {{ yearly_sales|json_script:"yearly-sales" }}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const monthlyData = JSON.parse(document.getElementById('monthly-sales').textContent);
+const yearlyData = JSON.parse(document.getElementById('yearly-sales').textContent);
+
+// Monthly sales
+const monthLabels = monthlyData.map(m => m.month);
+const monthTotals = monthlyData.map(m => m.total);
+
+new Chart(document.getElementById('monthlyChart'), {
+  type: 'bar',
+  data: {
+    labels: monthLabels,
+    datasets: [{
+      label: 'Sales (₹)',
+      data: monthTotals,
+      backgroundColor: '#0d6efd'
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+
+// Yearly sales
+const yearLabels = yearlyData.map(y => y.year);
+const yearTotals = yearlyData.map(y => y.total);
+
+new Chart(document.getElementById('yearlyChart'), {
+  type: 'line',
+  data: {
+    labels: yearLabels,
+    datasets: [{
+      label: 'Yearly Sales (₹)',
+      data: yearTotals,
+      borderColor: '#198754',
+      backgroundColor: 'rgba(25,135,84,0.1)',
+      fill: true,
+      tension: 0.3
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+</script>
+
+{% endblock %}

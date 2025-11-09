@@ -16,6 +16,13 @@ from django.contrib import messages
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
+from django.db.models.functions import TruncMonth, TruncYear
+from django.db.models import Sum, Count
+from django.utils.timezone import now
+from datetime import datetime
+from django.utils.dateformat import format
+from django.contrib.auth.decorators import user_passes_test
+from accounts.models import User
 
 
 class CartListView(generics.ListAPIView):
@@ -107,37 +114,6 @@ class CheckoutView(APIView):
             "discount": float(discount),
             "final_price": float(final_total),
         }, status=201)
-
-
-# class WishlistListView(generics.ListAPIView):
-#     serializer_class = WishlistSerializer
-#     permission_classes = [permissions.IsAuthenticated]
-
-#     def get_queryset(self):
-#         return WishlistItem.objects.filter(user=self.request.user).select_related('product')
-
-
-# class AddWishlistView(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-
-#     def post(self, request):
-#         product_id = request.data.get('product_id')
-#         product = get_object_or_404(Product, pk=product_id)
-#         obj, _ = WishlistItem.objects.get_or_create(user=request.user, product=product)
-#         return Response(WishlistSerializer(obj).data)
-
-
-# class RemoveWishlistView(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-
-#     def post(self, request):
-#         product_id = request.data.get('product_id')
-#         try:
-#             obj = WishlistItem.objects.get(user=request.user, product_id=product_id)
-#             obj.delete()
-#             return Response({"detail": "removed"})
-#         except WishlistItem.DoesNotExist:
-#             return Response({"detail": "not found"}, status=404)
 
 
 class CartPageView(LoginRequiredMixin, View):
@@ -312,3 +288,75 @@ def validate_promo(request):
         return JsonResponse({'valid': valid, 'discount_percent': promo.discount_percent if valid else 0})
     except PromoCode.DoesNotExist:
         return JsonResponse({'valid': False, 'discount_percent': 0})
+def is_manager(user):
+    return user.is_authenticated and getattr(user, 'role', '') == 'manager'
+
+
+@user_passes_test(is_manager)
+def manager_sales_dashboard(request):
+    """Manager dashboard to view all sales, orders, and status updates"""
+
+    # Filter option (month/year/all)
+    view_type = request.GET.get('view', 'all')
+
+    orders = Order.objects.select_related('user', 'shipping_address').prefetch_related('items')
+
+    if view_type == 'month':
+        current_month = now().month
+        orders = orders.filter(created_at__month=current_month)
+    elif view_type == 'year':
+        current_year = now().year
+        orders = orders.filter(created_at__year=current_year)
+
+    total_orders = orders.count()
+    total_sales = orders.aggregate(total=Sum('total_price'))['total'] or 0
+    total_customers = orders.values('user').distinct().count()
+
+    # Monthly and yearly sales summary
+    monthly_sales_qs = (
+        Order.objects.annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(total=Sum('total_price'))
+        .order_by('month')
+    )
+    yearly_sales_qs = (
+        Order.objects.annotate(year=TruncYear('created_at'))
+        .values('year')
+        .annotate(total=Sum('total_price'))
+        .order_by('year')
+    )
+
+    # Convert to JSON-safe lists (datetime → string)
+    monthly_sales = [
+        {'month': format(entry['month'], 'Y-m'), 'total': float(entry['total'] or 0)}
+        for entry in monthly_sales_qs
+    ]
+    yearly_sales = [
+        {'year': format(entry['year'], 'Y'), 'total': float(entry['total'] or 0)}
+        for entry in yearly_sales_qs
+    ]
+
+    context = {
+        "orders": orders.order_by('-created_at'),
+        "view_type": view_type,
+        "total_orders": total_orders,
+        "total_sales": total_sales,
+        "total_customers": total_customers,
+        "monthly_sales": monthly_sales,
+        "yearly_sales": yearly_sales,
+    }
+    return render(request, "manager/manager_sales_dashboard.html", context)
+
+@user_passes_test(is_manager)
+def update_order_status(request, order_id):
+    """Allow manager to update order status"""
+    order = get_object_or_404(Order, id=order_id)
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in dict(Order.STATUS_CHOICES):
+            order.status = new_status
+            order.save()
+            messages.success(request, f"Order #{order.id} updated to {order.status}")
+        else:
+            messages.error(request, "Invalid status selected.")
+    return redirect('manager-sales-dashboard')

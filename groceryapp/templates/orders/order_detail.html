@@ -1,23 +1,33 @@
 {% extends 'base.html' %}
 {% block content %}
-<h3>Order #{{ order.id }}</h3>
-<p>Date: {{ order.created_at }}</p>
-<p>Status: {{ order.get_status_display }}</p>
-<p>Total: ₹{{ order.total_price }}</p>
-<hr>
-<table class="table">
-  <thead>
-    <tr><th>Product</th><th>Qty</th><th>Price</th></tr>
-  </thead>
-  <tbody>
-    {% for item in order.items.all %}
-    <tr>
-      <td>{{ item.product.name }}</td>
-      <td>{{ item.quantity }}</td>
-      <td>₹{{ item.price_when_bought }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-<a href="{% url 'my-orders' %}" class="btn btn-outline-secondary">Back</a>
+<div class="container">
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <h4 class="mb-3">Order #{{ order.id }}</h4>
+      <div class="d-flex justify-content-between">
+        <p class="mb-0">Placed on: <strong>{{ order.created_at|date:"M d, Y H:i" }}</strong></p>
+        <span class="badge bg-primary">{{ order.get_status_display }}</span>
+      </div>
+      <hr>
+      <table class="table align-middle">
+        <thead class="table-light">
+          <tr><th>Product</th><th>Qty</th><th>Price</th></tr>
+        </thead>
+        <tbody>
+          {% for item in order.items.all %}
+          <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>₹{{ item.price_when_bought }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="text-end mt-3">
+        <h5>Total: ₹{{ order.total_price }}</h5>
+        <a href="{% url 'my-orders' %}" class="btn btn-outline-secondary mt-2">← Back to Orders</a>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

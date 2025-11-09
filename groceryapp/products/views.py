@@ -17,6 +17,8 @@ from .serializers import ProductListSerializer, ProductDetailSerializer
 from .permissions import IsManager
 from products.models import Product
 from orders.models import Order, OrderItem
+from django.db.models.functions import TruncMonth
+
 
 
 
@@ -133,8 +135,8 @@ class ProductForm(forms.ModelForm):
 
 @manager_required
 def manager_product_list(request):
-    qs = Product.objects.all().order_by('-created_at')
-    return render(request, 'products/manager_dashboard.html', {'products': qs})
+    products = Product.objects.all().order_by('-created_at')
+    return render(request, 'products/manager_all_products.html', {'products': products})
 
 
 @manager_required
@@ -201,8 +203,10 @@ def sales_report(request):
         report = report.order_by('-total_sold')
 
     return render(request, 'reports/sales_report.html', {'report': report, 'filter': filter_type})
-@user_passes_test(is_manager)
+
+@manager_required
 def low_stock_alert(request):
-    products = Product.objects.filter(stock__lt=5) #min stock - 5
-    return render(request, "products/low_stock.html", {"products": products})
+    low_products = Product.objects.filter(stock__lt=5).order_by('stock')
+    return render(request, "products/low_stock.html", {"low_products": low_products})
+
 

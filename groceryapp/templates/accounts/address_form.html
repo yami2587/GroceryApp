@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card mx-auto" style="max-width:720px;">
+<div class="card mx-auto shadow-sm border-0 mt-4" style="max-width:720px;">
   <div class="card-body">
     <h4 class="card-title mb-3">Add / Edit Address</h4>
     <form method="POST" novalidate>
@@ -8,54 +8,60 @@
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label">Full name</label>
-          <input name="full_name" class="form-control" placeholder="Your full name" required value="{{ request.POST.full_name|default:addr.full_name|default:'' }}">
+          <input name="full_name" class="form-control" placeholder="Your full name" required
+                 value="{{ request.POST.full_name|default:addr.full_name }}">
         </div>
         <div class="col-md-6">
           <label class="form-label">Phone</label>
-          <input name="phone" class="form-control" placeholder="+91 98765 43210" required value="{{ request.POST.phone|default:addr.phone|default:'' }}">
+          <input name="phone" class="form-control" placeholder="+91 98765 43210" required
+                 value="{{ request.POST.phone|default:addr.phone }}">
         </div>
 
         <div class="col-12">
           <label class="form-label">House / Flat / Building</label>
-          <input name="house_no" class="form-control" placeholder="Flat 501, Bldg A" required value="{{ request.POST.house_no|default:addr.house_no|default:'' }}">
+          <input name="house_no" class="form-control" placeholder="Flat 501, Bldg A" required
+                 value="{{ request.POST.house_no|default:addr.house_no }}">
         </div>
 
-        <div class="col-12">
-          <label class="form-label">Street / Locality</label>
-          <input name="street" class="form-control" placeholder="Street or colony" value="{{ request.POST.street|default:addr.street|default:'' }}">
+        <div class="col-md-6">
+          <label class="form-label">Street</label>
+          <input name="street" class="form-control" placeholder="Example Street"
+                 value="{{ request.POST.street|default:addr.street }}">
         </div>
 
         <div class="col-md-6">
           <label class="form-label">City</label>
-          <input name="city" class="form-control" required value="{{ request.POST.city|default:addr.city|default:'' }}">
+          <input name="city" class="form-control" placeholder="Example City"
+                 value="{{ request.POST.city|default:addr.city }}">
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-6">
           <label class="form-label">State</label>
-          <input name="state" class="form-control" value="{{ request.POST.state|default:addr.state|default:'' }}">
+          <input name="state" class="form-control" placeholder="State"
+                 value="{{ request.POST.state|default:addr.state }}">
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-6">
           <label class="form-label">Pincode</label>
-          <input name="pincode" class="form-control" value="{{ request.POST.pincode|default:addr.pincode|default:'' }}">
+          <input name="pincode" class="form-control" placeholder="123456"
+                 value="{{ request.POST.pincode|default:addr.pincode }}">
         </div>
 
         <div class="col-12">
           <label class="form-label">Landmark (optional)</label>
-          <input name="landmark" class="form-control" placeholder="Near XYZ" value="{{ request.POST.landmark|default:addr.landmark|default:'' }}">
+          <input name="landmark" class="form-control" placeholder="Near park or school"
+                 value="{{ request.POST.landmark|default:addr.landmark }}">
         </div>
 
-        <div class="col-12 d-flex align-items-center gap-3">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="default" id="defaultCheck" {% if addr.default or request.POST.default %}checked{% endif %}>
-            <label class="form-check-label" for="defaultCheck">Set as default address</label>
-          </div>
-
-          <div class="ms-auto">
-            <a href="{% url 'address_list' %}" class="btn btn-link">Cancel</a>
-            <button type="submit" class="btn btn-primary">Save address</button>
-          </div>
+        <div class="col-12 form-check mt-2">
+          <input type="checkbox" class="form-check-input" id="default" name="default">
+          <label for="default" class="form-check-label">Set as default address</label>
         </div>
+      </div>
+
+      <div class="mt-4 text-end">
+        <button type="submit" class="btn btn-primary">💾 Save Address</button>
+        <a href="{% url 'address_list' %}" class="btn btn-outline-secondary">Cancel</a>
       </div>
     </form>
   </div>

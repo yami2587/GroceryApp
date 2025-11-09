@@ -11,6 +11,8 @@ urlpatterns = [
     
         path('addresses/', views.address_list, name='address_list'),
     path('addresses/add/', views.address_add, name='address_add'),
+     path('addresses/<int:pk>/edit/', views.address_edit, name='address_edit'),   # ✅ NEW
+    path('addresses/<int:pk>/delete/', views.address_delete, name='address_delete'),  # ✅ NEW
     
     path('toggle-manager/', ToggleManagerView.as_view(), name='toggle-manager'),
      # API

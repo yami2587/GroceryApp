@@ -23,6 +23,9 @@ urlpatterns = [
     path('my-orders/', MyOrdersView.as_view(), name='my-orders'),
     path('order/<int:pk>/', OrderDetailView.as_view(), name='order-detail'),
     path('validate-promo/', views.validate_promo, name='validate-promo'),
+    path('manager/sales-dashboard/', views.manager_sales_dashboard, name='manager-sales-dashboard'),
+    path('manager/order/<int:order_id>/update/', views.update_order_status, name='update-order-status'),
+
 
 
 

@@ -1,14 +1,17 @@
 {% extends 'manager/manager_base.html' %}
 {% block manager_content %}
-<div class="container col-md-4 mt-5">
-  <h4>Restock "{{ product.name }}"</h4>
-  <form method="post">
-    {% csrf_token %}
-    <div class="mb-3">
-      <label>Amount to add:</label>
-      <input type="number" name="amount" class="form-control" min="1" required>
-    </div>
-    <button type="submit" class="btn btn-warning w-100">Restock</button>
-  </form>
+<div class="container col-md-5 mt-5">
+  <div class="card shadow-sm border-0 p-4">
+    <h4 class="mb-3 fw-semibold text-center">🔄 Restock “{{ product.name }}”</h4>
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="amount" class="form-label">Amount to add</label>
+        <input type="number" name="amount" id="amount" class="form-control" min="1" placeholder="e.g. 10" required>
+      </div>
+      <button type="submit" class="btn btn-warning w-100 fw-semibold">Restock</button>
+    </form>
+  </div>
 </div>
 {% endblock %}
