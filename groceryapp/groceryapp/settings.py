@@ -125,3 +125,23 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
+
+
+# --- Auto-create superuser on Render deploy ---
+import os
+from django.contrib.auth import get_user_model
+
+if os.environ.get("CREATE_SUPERUSER", "0") == "1":
+    try:
+        User = get_user_model()
+        username = os.getenv("DJANGO_SUPERUSER_USERNAME", "admin")
+        email = os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@example.com")
+        password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "admin123")
+
+        if not User.objects.filter(username=username).exists():
+            User.objects.create_superuser(username=username, email=email, password=password)
+            print(f"✅ Superuser '{username}' created automatically.")
+        else:
+            print("ℹ️ Superuser already exists, skipping creation.")
+    except Exception as e:
+        print(f"⚠️ Error while creating superuser: {e}")
