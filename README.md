@@ -267,6 +267,9 @@ Visit **[http://127.0.0.1:8000/](http://127.0.0.1:8000/)** 🎉
 * ✅ Email notifications for order status updates
 * ✅ Integrate Razorpay/Stripe for live payments
 * ✅ Add customer analytics (top buyers, repeat customers)
+* ✅ Large product upload
+* ✅ Sells analytics (MONTHLY / Yearly)
+* 
 
 ---
 
