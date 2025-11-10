@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator
 
 User = settings.AUTH_USER_MODEL
-
+#cart item
 class CartItem(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -19,7 +19,7 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.product} x {self.quantity}"
-
+#wishlist item (not using)
 class WishlistItem(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist_items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -27,7 +27,7 @@ class WishlistItem(models.Model):
 
     class Meta:
         unique_together = ('user','product')
-        
+ #shipping address for order       
 class ShippingAddress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='addresses')
     full_name = models.CharField(max_length=200)
@@ -43,7 +43,7 @@ class ShippingAddress(models.Model):
 
     def __str__(self):
         return f"{self.full_name} • {self.address_line1}"
-    
+#promo codes     
 class PromoCode(models.Model):
     code = models.CharField(max_length=32, unique=True)
     discount_percent = models.PositiveIntegerField(validators=[MinValueValidator(1)], default=0)
@@ -64,7 +64,7 @@ class PromoCode(models.Model):
     def __str__(self):
         return f"{self.code} - {self.discount_percent}%"
 
-
+#main Order model
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     shipping_address = models.ForeignKey(ShippingAddress, null=True, blank=True, on_delete=models.SET_NULL ,)
@@ -80,14 +80,14 @@ class Order(models.Model):
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
 
-
+#order item
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField()
     price_when_bought = models.DecimalField(max_digits=10, decimal_places=2)
     
-
+#payment model curently using demo but updat it for real payment
 class Payment(models.Model):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')
     amount = models.DecimalField(max_digits=12, decimal_places=2)

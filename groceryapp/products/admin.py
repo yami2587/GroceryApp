@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import Product
-
+#product customigation
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name','category','price','stock','sold_count')

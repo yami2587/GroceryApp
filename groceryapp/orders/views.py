@@ -24,7 +24,7 @@ from django.utils.dateformat import format
 from django.contrib.auth.decorators import user_passes_test
 from accounts.models import User
 
-
+# Cart Views
 class CartListView(generics.ListAPIView):
     serializer_class = CartItemSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -32,7 +32,7 @@ class CartListView(generics.ListAPIView):
     def get_queryset(self):
         return CartItem.objects.filter(user=self.request.user).select_related('product')
 
-
+#add to cart api
 class AddToCartView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -49,7 +49,7 @@ class AddToCartView(APIView):
         cart_item.save()
         return Response(CartItemSerializer(cart_item).data)
 
-
+#remove from cart api
 class RemoveFromCartView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -61,7 +61,7 @@ class RemoveFromCartView(APIView):
             return Response({"detail": "removed"})
         except CartItem.DoesNotExist:
             return Response({"detail": "Item not found"}, status=404)
-
+#checkout api
 class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -115,14 +115,14 @@ class CheckoutView(APIView):
             "final_price": float(final_total),
         }, status=201)
 
-
+#cart page view
 class CartPageView(LoginRequiredMixin, View):
     def get(self, request):
         cart_items = CartItem.objects.filter(user=request.user).select_related('product')
         subtotal = sum(item.product.price * item.quantity for item in cart_items)
         return render(request, 'orders/cart.html', {'cart_items': cart_items, 'subtotal': subtotal})
 
-
+#add to cart view for UI
 class AddToCartViewUI(LoginRequiredMixin, View):
     def post(self, request):
         product_id = request.POST.get('product_id')
@@ -139,7 +139,7 @@ class AddToCartViewUI(LoginRequiredMixin, View):
         messages.success(request, f"Added {product.name} (x{qty}) to cart.")
         return redirect(request.META.get('HTTP_REFERER', '/'))
 
-
+#remove from cart view for UI
 class RemoveFromCartViewUI(LoginRequiredMixin, View):
     def post(self, request):
         product_id = request.POST.get('product_id')
@@ -152,7 +152,7 @@ class RemoveFromCartViewUI(LoginRequiredMixin, View):
         return redirect(reverse('cart-page'))
 
 
-
+#checkout page view
 class CheckoutPageView(LoginRequiredMixin, View):
     def get(self, request):
         cart_items = CartItem.objects.filter(user=request.user).select_related('product')
@@ -206,7 +206,7 @@ class CheckoutPageView(LoginRequiredMixin, View):
 
         total = sum(item.product.price * item.quantity for item in cart_items)
         discount = Decimal(0)
-        if promo_code_str:
+        if promo_code_str:#promo code validator
             promo = PromoCode.objects.filter(code__iexact=promo_code_str, active=True).first()
             if promo and promo.is_valid():
                 discount = (promo.discount_percent / Decimal(100)) * total
@@ -239,25 +239,25 @@ class CheckoutPageView(LoginRequiredMixin, View):
         cart_items.delete()
         messages.success(request, "Order placed successfully!")
         return redirect('order-success', pk=order.id)
-
+#order success view
 class OrderSuccessView(LoginRequiredMixin, View):
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk, user=request.user)
         return render(request, 'orders/order_success.html', {'order': order})
 
-
+#my orders view
 class MyOrdersView(LoginRequiredMixin, View):
     def get(self, request):
         orders = Order.objects.filter(user=request.user).order_by('-created_at')
         return render(request, 'orders/my_orders.html', {'orders': orders})
 
-
+#order detail view
 class OrderDetailView(LoginRequiredMixin, View):
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk, user=request.user)
         return render(request, 'orders/order_detail.html', {'order': order})
 
-
+#payment view (simulated)
 class PaymentView(LoginRequiredMixin, View):
     def post(self, request):
         order_id = request.POST.get('order_id')
@@ -278,7 +278,7 @@ class PaymentView(LoginRequiredMixin, View):
         return redirect('order-success', pk=order.id)
 
 
-
+#promo code validation api
 @require_GET
 def validate_promo(request):
     code = request.GET.get('code', '').strip()
@@ -291,7 +291,7 @@ def validate_promo(request):
 def is_manager(user):
     return user.is_authenticated and getattr(user, 'role', '') == 'manager'
 
-
+#manager sales dashboard view(have bug not showing chart in template fix that )
 @user_passes_test(is_manager)
 def manager_sales_dashboard(request):
     """Manager dashboard to view all sales, orders, and status updates"""
@@ -346,7 +346,7 @@ def manager_sales_dashboard(request):
         "yearly_sales": yearly_sales,
     }
     return render(request, "manager/manager_sales_dashboard.html", context)
-
+#update order status view for manager
 @user_passes_test(is_manager)
 def update_order_status(request, order_id):
     """Allow manager to update order status"""

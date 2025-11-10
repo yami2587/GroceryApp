@@ -1,5 +1,5 @@
 from django.db import models
-
+#product model
 class Product(models.Model):
     CATEGORY_CHOICES = [
         ("fruits", "Fruits"),

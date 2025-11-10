@@ -21,15 +21,15 @@ from django.db.models.functions import TruncMonth
 
 
 
-
+#is manager check
 def is_manager(user):
     return user.is_authenticated and getattr(user, 'role', '') == 'manager'
 
-
+#manager decorator
 def manager_required(view_func):
     return user_passes_test(is_manager)(view_func)
 
-
+#home view with search, filter, pagination
 def home(request):
     qs = Product.objects.all()
     q = request.GET.get('q')
@@ -70,7 +70,7 @@ def home(request):
         "page_obj": products_page,
     })
 
-
+#product detail view
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
     related_products = Product.objects.filter(category=product.category).exclude(id=pk)[:4]
@@ -79,7 +79,7 @@ def product_detail(request, pk):
         'related_products': related_products
     })
 
-
+#product view
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -126,19 +126,19 @@ class ProductViewSet(viewsets.ModelViewSet):
         product.refresh_from_db()
         return Response({"id": product.id, "stock": product.stock})
 
-
+#product form 
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = ['name', 'category', 'description', 'price', 'stock', 'image_url', 'image']
 
-
+#manager product list retun view
 @manager_required
 def manager_product_list(request):
     products = Product.objects.all().order_by('-created_at')
     return render(request, 'products/manager_all_products.html', {'products': products})
 
-
+#manager product add view
 @manager_required
 def manager_product_add(request):
     if request.method == "POST":
@@ -151,7 +151,7 @@ def manager_product_add(request):
         form = ProductForm()
     return render(request, "products/manager_add_product.html", {"form": form})
 
-
+#product edit by manager
 @manager_required
 def manager_product_edit(request, pk):
     product = get_object_or_404(Product, pk=pk)
@@ -165,7 +165,7 @@ def manager_product_edit(request, pk):
         form = ProductForm(instance=product)
     return render(request, "products/manager_edit_product.html", {"form": form, "product": product})
 
-
+#delete product manager
 @manager_required
 def manager_product_delete(request, pk):
     p = get_object_or_404(Product, pk=pk)
@@ -178,7 +178,7 @@ def manager_product_delete(request, pk):
         return redirect('manager-product-list')
     return render(request, 'products/manager_delete.html', {'product': p})
 
-
+#product restock view
 @manager_required
 def manager_product_restock(request, pk):
     p = get_object_or_404(Product, pk=pk)
@@ -190,6 +190,7 @@ def manager_product_restock(request, pk):
             messages.success(request, f"📦 Restocked {p.name} by {amount} units.")
         return redirect('manager-product-list')
     return render(request, 'products/manager_restock.html', {'product': p})
+#sales report view
 @manager_required
 def sales_report(request):
     filter_type = request.GET.get('filter', 'most_sold')
@@ -203,7 +204,7 @@ def sales_report(request):
         report = report.order_by('-total_sold')
 
     return render(request, 'reports/sales_report.html', {'report': report, 'filter': filter_type})
-
+#low stock alert view
 @manager_required
 def low_stock_alert(request):
     low_products = Product.objects.filter(stock__lt=5).order_by('stock')

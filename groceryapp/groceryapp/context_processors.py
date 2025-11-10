@@ -1,5 +1,5 @@
 from orders.models import CartItem
-
+#context processor to add cart count and user role to templates
 def cart_and_role(request):
     cart_count = 0
     is_manager = False

@@ -5,7 +5,7 @@ from products.models import Product
 from .models import PromoCode
 
 User = get_user_model()
-
+#demo test for promo code during checkout by gpt
 class CheckoutPromoTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='u1', password='pass')

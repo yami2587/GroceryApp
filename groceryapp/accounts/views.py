@@ -24,7 +24,7 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = RegisterSerializer
 
-
+#for view profile
 class ProfileView(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -33,7 +33,7 @@ class ProfileView(generics.RetrieveAPIView):
     def get_object(self):
         return self.request.user
 
-
+#manage role toggle view
 class ToggleManagerView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -51,7 +51,7 @@ class ToggleManagerView(APIView):
     
 def is_manager(user):
     return user.is_authenticated and  user.role == 'manager'
-
+#manager dashboard view
 @login_required
 @user_passes_test(is_manager)
 def manager_dashboard(request):
@@ -67,7 +67,7 @@ def manager_dashboard(request):
         "total_low_stock": total_low_stock,
     }
     return render(request, "products/manager_dashboard.html", context)
-
+#user registration view
 def register_view(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
@@ -88,7 +88,7 @@ def register_view(request):
 
     return render(request, 'accounts/register.html', {'form': form})
 
-
+#login view
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -107,13 +107,13 @@ def login_view(request):
 
     return render(request, 'accounts/login.html', {'form': form})
 
-
+#logout view
 @login_required
 def logout_view(request):
     logout(request)
     messages.info(request, "You have been logged out.")
     return redirect('login')
-
+#address list view
 @login_required
 def address_list(request):
     addresses = Address.objects.filter(user=request.user)
@@ -136,6 +136,7 @@ def address_list(request):
 #         )
 #         return redirect('address_list')
 #     return render(request, 'accounts/address_form.html')
+#address add view
 @login_required
 def address_add(request):
     if request.method == 'POST':
@@ -165,7 +166,7 @@ def address_add(request):
     )
     return render(request, 'accounts/address_form.html', {'addr': empty_addr})
 
-
+#address edit view
 @login_required
 def address_edit(request, pk):
     addr = get_object_or_404(Address, pk=pk, user=request.user)
@@ -184,7 +185,7 @@ def address_edit(request, pk):
         return redirect('address_list')
     return render(request, 'accounts/address_form.html', {'addr': addr})
 
-
+#address delete view
 @login_required
 def address_delete(request, pk):
     addr = get_object_or_404(Address, pk=pk, user=request.user)
