@@ -10,3 +10,4 @@ whitenoise
 django-filter
 Pillow
 dj-database-url
+django-widget-tweaks
