@@ -129,20 +129,26 @@ USE_TZ = True
 
 
 # --- Auto-create superuser on Render deploy ---
-import os
-from django.contrib.auth import get_user_model
+from django.apps import apps
 
-if os.environ.get("CREATE_SUPERUSER", "0") == "1":
+def create_default_superuser():
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    username = os.getenv("DJANGO_SUPERUSER_USERNAME", "admin")
+    email = os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@example.com")
+    password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "admin123")
+    if not User.objects.filter(username=username).exists():
+        User.objects.create_superuser(username=username, email=email, password=password)
+        print(f"Superuser '{username}' created automatically.")
+    else:
+        print("ℹSuperuser already exists, skipping creation.")
+
+if os.environ.get("CREATE_SUPERUSER") == "1":
+    # Delay execution until apps are loaded
+    from django.core.management import call_command
+    from django.db.utils import OperationalError
     try:
-        User = get_user_model()
-        username = os.getenv("DJANGO_SUPERUSER_USERNAME", "admin")
-        email = os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@example.com")
-        password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "admin123")
-
-        if not User.objects.filter(username=username).exists():
-            User.objects.create_superuser(username=username, email=email, password=password)
-            print(f" Superuser '{username}' created automatically.")
-        else:
-            print("ℹSuperuser already exists, skipping creation.")
-    except Exception as e:
-        print(f"Error while creating superuser: {e}")
+        if apps.ready:
+            create_default_superuser()
+    except OperationalError:
+        pass
