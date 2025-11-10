@@ -305,10 +305,9 @@ Visit **[http://127.0.0.1:8000/](http://127.0.0.1:8000/)** 🎉
 
 ### 👨‍💻 Author
 
-**Yami (Cybersecurity & Software Engineer)**
+**Aman Raj Dewangan (Cybersecurity & Software Engineer)**
 
-> A complete Django + PostgreSQL E-Commerce project — built from scratch with love, logic, and coffee ☕
-
+> A complete Django + PostgreSQL E-Commerce project 
 ---
 
 ### 📜 License
