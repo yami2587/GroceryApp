@@ -1,4 +1,5 @@
 import os
+import django
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -130,6 +131,7 @@ USE_TZ = True
 
 # --- Auto-create superuser on Render deploy ---
 from django.apps import apps
+from django.core.management import call_command
 
 def create_default_superuser():
     from django.contrib.auth import get_user_model
@@ -144,11 +146,12 @@ def create_default_superuser():
         print("ℹSuperuser already exists, skipping creation.")
 
 if os.environ.get("CREATE_SUPERUSER") == "1":
-    # Delay execution until apps are loaded
-    from django.core.management import call_command
-    from django.db.utils import OperationalError
     try:
-        if apps.ready:
-            create_default_superuser()
-    except OperationalError:
-        pass
+        django.setup()
+        call_command("createsuperuser",
+                     interactive=False,
+                     username=os.getenv("DJANGO_SUPERUSER_USERNAME", "admin"),
+                     email=os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@example.com"),
+                     verbosity=1)
+    except Exception as e:
+        print(f"⚠️ Auto-superuser creation skipped or failed: {e}")

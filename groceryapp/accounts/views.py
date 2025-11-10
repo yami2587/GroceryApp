@@ -95,18 +95,28 @@ def login_view(request):
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            login(request, user)
 
-            if user.role == 'manager':
+  
+            if user.is_superuser or user.is_staff:
+
+                login(request, user)
+                return redirect('/admin/')
+
+     
+            elif getattr(user, 'role', '') == 'manager':
+                login(request, user)
                 return redirect('manager_dashboard')
+
             else:
+                login(request, user)
                 return redirect('product_list')
         else:
-            messages.error(request, "Invalid credentials. Try again.")
+            messages.error(request, "Invalid username or password.")
     else:
         form = AuthenticationForm()
 
     return render(request, 'accounts/login.html', {'form': form})
+
 
 #logout view
 @login_required
