@@ -27,11 +27,6 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
-    .list-group-item-action:hover {
-      background-color: #f1f1f1;
-      color: #0d6efd;
-    }
-
     .product-card img {
       height: 180px;
       object-fit: cover;
@@ -46,32 +41,89 @@
       }
     }
 
+    /* ---------- Sticky Sidebar ---------- */
+    aside.col-md-3 {
+      position: sticky;
+      top: 90px;
+      align-self: flex-start;
+      height: calc(100vh - 100px);
+      overflow-y: auto;
+      padding-bottom: 1rem;
+      z-index: 20;
+    }
+
+    aside.col-md-3::-webkit-scrollbar {
+      width: 8px;
+    }
+    aside.col-md-3::-webkit-scrollbar-thumb {
+      background-color: rgba(0,0,0,0.3);
+      border-radius: 4px;
+    }
+
+    /* ---------- Dropdown Fix ---------- */
+    .dropdown-menu {
+      position: absolute !important;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      max-height: 250px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      background-color: #fff;
+      z-index: 2000 !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     /* ---------- Dark Mode ---------- */
     .dark-mode {
       background-color: #121212 !important;
       color: #e1e1e1 !important;
     }
 
+    /* Navbar fix for dark mode */
     .dark-mode .navbar {
-      background-color: #1e1e1e !important;
-      color: #fff !important;
+      background-color: #0d0d0d !important;
+      border-bottom: 1px solid #333 !important;
+    }
+    .dark-mode .navbar a,
+    .dark-mode .navbar .nav-link {
+      color: #eaeaea !important;
+    }
+    .dark-mode .navbar a:hover,
+    .dark-mode .navbar .nav-link:hover {
+      color: #0d6efd !important;
     }
 
+    /* Cards and sidebar in dark mode */
     .dark-mode .card {
       background-color: #1e1e1e !important;
       color: #e1e1e1 !important;
       border-color: #333 !important;
     }
-
-    .dark-mode .list-group-item {
-      background-color: #1e1e1e !important;
-      color: #e1e1e1 !important;
+    .dark-mode aside.col-md-3 .card {
+      background-color: #1b1b1b !important;
+      border-color: #333 !important;
+      color: #ddd !important;
     }
 
-    .dark-mode .list-group-item:hover {
+    /* Dropdown in dark mode */
+    .dark-mode .dropdown-menu {
+      background-color: #1f1f1f !important;
+      color: #eaeaea !important;
+      border-color: #333 !important;
+    }
+    .dark-mode .dropdown-item:hover {
       background-color: #2a2a2a !important;
+      color: #0d6efd !important;
     }
 
+    /* ---------- Buttons ---------- */
     .dark-mode .btn-outline-secondary,
     .dark-mode .btn-outline-primary {
       color: #e1e1e1 !important;
@@ -101,7 +153,7 @@
       border-top-color: #333;
     }
 
-    /* ---------- Dark Mode Toggle Button ---------- */
+    /* ---------- Dark Mode Toggle ---------- */
     #themeToggle {
       position: fixed;
       bottom: 20px;
@@ -111,30 +163,6 @@
       width: 42px;
       height: 42px;
     }
-    /* --- Fix overlapping dropdowns for sidebar filters --- */
-.dropdown {
-  position: relative;
-}
-
-.dropdown-menu {
-  max-height: 250px;
-  overflow-y: auto;
-  width: 100%;
-  position: absolute !important;
-  top: 100%;
-  left: 0;
-  z-index: 1050; 
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.dropdown-toggle::after {
-  float: right;
-  margin-top: 0.5rem;
-}
-
-.card-body .dropdown-menu {
-  margin-top: 0.25rem !important;
-}
   </style>
 </head>
 
@@ -151,7 +179,7 @@
         aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-<!-- search fun -->
+
       <div class="collapse navbar-collapse" id="nav">
         {% if not is_manager %}
         <form class="d-flex position-relative ms-3 flex-grow-1" id="searchForm" method="get" action="/">
@@ -165,9 +193,6 @@
             {% endfor %}
           </select>
           <button class="btn btn-outline-primary btn-sm" type="submit">Search</button>
-        <div id="searchSuggestions" class="position-absolute bg-white border rounded shadow-sm mt-2" style="z-index:9999; width:250px; display:none;">
-</div>
-
         </form>
         {% endif %}
 
@@ -212,7 +237,7 @@
   </nav>
 
   <!-- Main content -->
-  <main class="flex-grow-1 container py-5 mt-5">
+  <main class="flex-grow-1 container py-5" style="margin-top: 90px;">
     {% if messages %}
       {% for m in messages %}
       <div class="alert alert-{{ m.tags|default:'info' }} alert-dismissible fade show" role="alert">
@@ -224,32 +249,12 @@
 
     <div class="row">
       {% if not is_manager %}
-      <aside class="col-md-3 mb-4 z-index: 1050;">
-<div class="card mb-3">
-  <div class="card-body">
-    <h6 class="mb-2">Category Filter</h6>
-    <div class="dropdown">
-      <button class="btn btn-outline-secondary w-100 dropdown-toggle" type="button" id="categoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        {% if request.GET.category %}
-          {{ request.GET.category|title }}
-        {% else %}
-          All Categories
-        {% endif %}
-      </button>
-      <ul class="dropdown-menu w-100" aria-labelledby="categoryDropdown">
-        <li><a class="dropdown-item" href="/">All</a></li>
-        {% for key,label in CATEGORY_CHOICES %}
-          <li><a class="dropdown-item" href="/?category={{ key }}">{{ label }}</a></li>
-        {% endfor %}
-      </ul>
-    </div>
-  </div>
-</div>
+      <aside class="col-md-3 mb-4 position-relative">
 
 
-        <div class="card z-index: 10;">
+        <div class="card">
           <div class="card-body">
-            <h6>Filters</h6>
+            <h6 class="fw-semibold">Filters</h6>
             <form id="filterForm" method="get" action="/">
               <div class="mb-2">
                 <label class="form-label small">Sort</label>
@@ -272,6 +277,26 @@
             </form>
           </div>
         </div>
+          <div class="card mb-3">
+          <div class="card-body">
+            <h6 class="mb-2 fw-semibold">Category Filter</h6>
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary w-100 dropdown-toggle" type="button" id="categoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                {% if request.GET.category %}
+                  {{ request.GET.category|title }}
+                {% else %}
+                  All Categories
+                {% endif %}
+              </button>
+              <ul class="dropdown-menu w-100" aria-labelledby="categoryDropdown">
+                <li><a class="dropdown-item" href="/">All</a></li>
+                {% for key,label in CATEGORY_CHOICES %}
+                  <li><a class="dropdown-item" href="/?category={{ key }}">{{ label }}</a></li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
       </aside>
       {% endif %}
 
@@ -283,7 +308,7 @@
 
   <!-- Footer -->
   <footer>
-    © 2025 GroceryStore — Built with ❤️ by <a href="https://github.com/yami2587" class="text-decoration-none">Yami</a>.
+    © 2025 GroceryStore — Built with ❤️ by <a href="https://github.com/yami2587" class="text-decoration-none text-primary">Yami</a>.
   </footer>
 
   <!-- Dark Mode Toggle -->
@@ -291,22 +316,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // --- Cart Function ---
-    async function addToCart(productId, qty = 1) {
-      const resp = await fetch('/api/orders/cart/add/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-        body: JSON.stringify({ product_id: productId, quantity: qty })
-      });
-      const data = await resp.json();
-      if (resp.ok) {
-        alert('Added to cart');
-        location.reload();
-      } else {
-        alert(data.detail || 'Failed to add to cart');
-      }
-    }
-
     // --- Dark Mode Script ---
     const body = document.body;
     const themeToggle = document.getElementById('themeToggle');
@@ -326,42 +335,6 @@
       themeToggle.classList.toggle('btn-outline-light');
       themeToggle.classList.toggle('btn-outline-dark');
     });
-
-  // --- Live Search Suggestions ---
-const searchInput = document.querySelector('#searchForm input[name="q"]');
-const suggestionBox = document.getElementById('searchSuggestions');
-
-if (searchInput && suggestionBox) {
-  searchInput.addEventListener('input', async () => {
-    const query = searchInput.value.trim();
-    if (query.length < 2) {
-      suggestionBox.style.display = 'none';
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/products/?search=${encodeURIComponent(query)}`);
-      const data = await res.json();
-
-      if (data && data.results && data.results.length > 0) {
-        suggestionBox.innerHTML = data.results
-          .slice(0, 6)
-          .map(p => `<a href="/product/${p.id}/" class="dropdown-item">${p.name}</a>`)
-          .join('');
-        suggestionBox.style.display = 'block';
-      } else {
-        suggestionBox.innerHTML = '<div class="dropdown-item text-muted small">No matches</div>';
-        suggestionBox.style.display = 'block';
-      }
-    } catch (err) {
-      suggestionBox.style.display = 'none';
-    }
-  });
-
-  // Hide on blur
-  searchInput.addEventListener('blur', () => setTimeout(() => { suggestionBox.style.display = 'none'; }, 200));
-}
-
   </script>
 </body>
 </html>

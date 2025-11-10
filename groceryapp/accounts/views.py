@@ -109,7 +109,7 @@ def login_view(request):
 
             else:
                 login(request, user)
-                return redirect('product_list')
+                return redirect('/')
         else:
             messages.error(request, "Invalid username or password.")
     else:

@@ -9,12 +9,13 @@ from orders.views import MyOrdersView, OrderDetailView
 from products.views import low_stock_alert , manager_product_restock , sales_report
 from django.conf import settings
 from django.conf.urls.static import static
+from products import views as product_views
 
 
 urlpatterns = [
     #admin site
     path('admin/', admin.site.urls),
-    path('', home, name='home'), 
+     path('', product_views.home, name='product_list'),
     path('accounts/', include('accounts.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
     path("products/", include("products.urls")),
