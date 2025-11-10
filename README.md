@@ -44,103 +44,133 @@ A complete **end-to-end Grocery Store Management web application** built with **
 
 ```mermaid
 erDiagram
-    USER ||--o{ ORDER : places
-    USER ||--o{ ADDRESS : has
-    USER ||--o{ CARTITEM : adds
-    USER ||--o{ WISHLISTITEM : saves
+  %% === ENTITIES ===
+  USER {
+    bigint id PK "serial / bigserial"
+    varchar username "unique"
+    varchar email "unique, nullable"
+    varchar password
+    varchar first_name
+    varchar last_name
+    varchar role "customer | manager"
+    boolean is_staff
+    boolean is_active
+    timestamptz date_joined
+  }
 
-    ORDER ||--|{ ORDERITEM : contains
-    ORDER ||--|| PAYMENT : has
-    ORDER }o--|| SHIPPINGADDRESS : ships_to
-    ORDER }o--|| PROMOCODE : applies
+  ADDRESS {
+    bigint id PK
+    bigint user_id FK "-> USER.id"
+    varchar full_name
+    varchar phone
+    varchar house_no
+    varchar street
+    varchar city
+    varchar state
+    varchar pincode
+    varchar landmark
+    boolean default "address default flag"
+    varchar country
+  }
 
-    PRODUCT ||--o{ CARTITEM : included_in
-    PRODUCT ||--o{ ORDERITEM : purchased_in
-    PRODUCT ||--o{ WISHLISTITEM : wished_by
+  PRODUCT {
+    bigint id PK
+    varchar name
+    varchar category
+    text description
+    numeric price "precision 10,2"
+    integer stock ">=0"
+    integer sold_count ">=0"
+    varchar image_url
+    varchar image_path "stored file path when ImageField used"
+    timestamptz created_at
+    timestamptz updated_at
+    boolean is_active "soft-delete flag (recommended)"
+  }
 
-    USER {
-        int id
-        string username
-        string email
-        string password
-        string role
-    }
+  CARTITEM {
+    bigint id PK
+    bigint user_id FK "-> USER.id"
+    bigint product_id FK "-> PRODUCT.id"
+    integer quantity
+    timestamptz added_at
+  }
 
-    PRODUCT {
-        int id
-        string name
-        string category
-        text description
-        decimal price
-        int stock
-        int sold_count
-        string image_url
-        string image_path
-        datetime created_at
-    }
+  WISHLISTITEM {
+    bigint id PK
+    bigint user_id FK "-> USER.id"
+    bigint product_id FK "-> PRODUCT.id"
+    timestamptz added_at
+  }
 
-    ORDER {
-        int id
-        decimal total_price
-        string status
-        datetime created_at
-        int user_id
-        int promo_code_id
-        int shipping_address_id
-    }
+  PROMOCODE {
+    bigint id PK
+    varchar code "unique"
+    integer discount_percent
+    boolean active
+    timestamptz created_at
+    timestamptz expires_at
+  }
 
-    ORDERITEM {
-        int id
-        int order_id
-        int product_id
-        int quantity
-        decimal price_when_bought
-    }
+  SHIPPINGADDRESS {
+    bigint id PK
+    bigint user_id FK "-> USER.id"
+    varchar full_name
+    varchar phone
+    varchar address_line1
+    varchar street
+    varchar address_line2
+    varchar city
+    varchar state
+    varchar postal_code
+    varchar country
+    timestamptz created_at
+  }
 
-    PAYMENT {
-        int id
-        int order_id
-        decimal amount
-        bool paid
-        string method
-        datetime created_at
-    }
+  "ORDER" {
+    bigint id PK
+    bigint user_id FK "-> USER.id"
+    bigint shipping_address_id FK "-> SHIPPINGADDRESS.id NULLABLE"
+    bigint promo_code_id FK "-> PROMOCODE.id NULLABLE"
+    numeric total_price "10,2"
+    varchar status "PENDING|PAID|SHIPPED|DELIVERED|CANCELLED"
+    timestamptz created_at
+    timestamptz updated_at
+  }
 
-    CARTITEM {
-        int id
-        int user_id
-        int product_id
-        int quantity
-        datetime added_at
-    }
+  ORDERITEM {
+    bigint id PK
+    bigint order_id FK "-> ORDER.id"
+    bigint product_id FK "-> PRODUCT.id"
+    integer quantity
+    numeric price_when_bought "10,2"
+  }
 
-    WISHLISTITEM {
-        int id
-        int user_id
-        int product_id
-        datetime added_at
-    }
+  PAYMENT {
+    bigint id PK
+    bigint order_id FK "-> ORDER.id UNIQUE"
+    numeric amount "10,2"
+    boolean paid
+    varchar method
+    timestamptz created_at
+  }
 
-    SHIPPINGADDRESS {
-        int id
-        int user_id
-        string full_name
-        string phone
-        string address_line1
-        string street
-        string city
-        string postal_code
-        string country
-    }
+  %% === RELATIONSHIPS (cardinality) ===
+  USER ||--o{ ADDRESS : "1..n"
+  USER ||--o{ CARTITEM : "1..n"
+  USER ||--o{ WISHLISTITEM : "1..n"
+  USER ||--o{ SHIPPINGADDRESS : "1..n"
+  USER ||--o{ "ORDER" : "1..n"
 
-    PROMOCODE {
-        int id
-        string code
-        int discount_percent
-        bool active
-        datetime created_at
-        datetime expires_at
-    }
+  PRODUCT ||--o{ CARTITEM : "1..n"
+  PRODUCT ||--o{ WISHLISTITEM : "1..n"
+  PRODUCT ||--o{ ORDERITEM : "1..n"
+
+  "ORDER" ||--|{ ORDERITEM : "1..n"
+  "ORDER" ||--o| PAYMENT : "0..1..1"
+  "ORDER" }o--|| SHIPPINGADDRESS : "0..1"
+  "ORDER" }o--|| PROMOCODE : "0..1"
+
 ```
 
 ---
