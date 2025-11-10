@@ -1,6 +1,6 @@
 # django djangorestframework djangorestframework-simplejwt django-filter
 # Python
-Django>=4.2
+Django>=5.2
 djangorestframework
 psycopg2-binary
 djangorestframework-simplejwt
@@ -9,3 +9,4 @@ python-dotenv
 whitenoise
 django-filter
 Pillow
+dj-database-url
