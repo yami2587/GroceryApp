@@ -111,6 +111,30 @@
       width: 42px;
       height: 42px;
     }
+    /* --- Fix overlapping dropdowns for sidebar filters --- */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  max-height: 250px;
+  overflow-y: auto;
+  width: 100%;
+  position: absolute !important;
+  top: 100%;
+  left: 0;
+  z-index: 1050; 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.dropdown-toggle::after {
+  float: right;
+  margin-top: 0.5rem;
+}
+
+.card-body .dropdown-menu {
+  margin-top: 0.25rem !important;
+}
   </style>
 </head>
 
@@ -259,7 +283,7 @@
 
   <!-- Footer -->
   <footer>
-    © 2025 GroceryStore — Built with ❤️ by Yami.
+    © 2025 GroceryStore — Built with ❤️ by <a href="https://github.com/yami2587" class="text-decoration-none">Yami</a>.
   </footer>
 
   <!-- Dark Mode Toggle -->

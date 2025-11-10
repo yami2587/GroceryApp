@@ -25,7 +25,8 @@ INSTALLED_APPS = [
     #my apps
     "rest_framework",
     "rest_framework.authtoken",
-    "django_filters", 
+    "django_filters",
+    "widget_tweaks", 
 
     "accounts",
     "products",
@@ -140,8 +141,8 @@ if os.environ.get("CREATE_SUPERUSER", "0") == "1":
 
         if not User.objects.filter(username=username).exists():
             User.objects.create_superuser(username=username, email=email, password=password)
-            print(f"✅ Superuser '{username}' created automatically.")
+            print(f" Superuser '{username}' created automatically.")
         else:
-            print("ℹ️ Superuser already exists, skipping creation.")
+            print("ℹSuperuser already exists, skipping creation.")
     except Exception as e:
-        print(f"⚠️ Error while creating superuser: {e}")
+        print(f"Error while creating superuser: {e}")

@@ -74,15 +74,16 @@ def register_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, "Registration successful!")
-
-            # Redirect by role
+            messages.success(request, f" Account created successfully! Welcome, {user.username}.")
             if user.role == 'manager':
                 return redirect('manager_dashboard')
             else:
-                return redirect('product_list')
+                return redirect('/')  
         else:
-            messages.error(request, "Please correct the errors below.")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.capitalize()}: {error}")
+            messages.error(request, " Please correct the errors below.")
     else:
         form = RegisterForm()
 
